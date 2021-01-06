@@ -57,23 +57,10 @@ public class SymbolTable {
         // or encountered an inheritance cycle
         while (classIterator != null || !classSet.add(classIterator)) {
             String needleName = needle.getName();
-            List<Symbol> matchingAttributes = classIterator.attributeSymbols.get(needleName);
-            MethodSymbol matchingMethod = (MethodSymbol) classIterator.methodSymbols.get(needleName);
-            List<Symbol> haystack = new ArrayList<>();
+            Symbol result = classIterator.lookup(needleName);
 
-            // Create a shallow copy list with both attributes and methods matching this name
-            // We have our minds at ease thanks to the comprehensively overridden equals method
-            if (matchingAttributes != null) {
-                haystack = new ArrayList<>(matchingAttributes);
-            }
-            else if (matchingMethod != null) {
-                haystack.add(matchingMethod);
-            }
-
-            for (Symbol symbol : haystack) {
-                if (symbol.equals(needle)) {
-                    return symbol;
-                }
+            if (result != null) {
+                return result;
             }
 
             classIterator = inheritances.get(classIterator);

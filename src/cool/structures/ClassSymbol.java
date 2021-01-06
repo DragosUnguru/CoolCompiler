@@ -1,12 +1,10 @@
 package cool.structures;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 public class ClassSymbol extends IdSymbol implements Scope {
-    protected Map<String, List<Symbol>> attributeSymbols = new LinkedHashMap<>();
+    protected Map<String, Symbol> attributeSymbols = new LinkedHashMap<>();
     protected Map<String, Symbol> methodSymbols = new LinkedHashMap<>();
     protected Scope parent;
 
@@ -20,13 +18,10 @@ public class ClassSymbol extends IdSymbol implements Scope {
         String symbolName = sym.getName();
 
         if (attributeSymbols.containsKey(symbolName)) {
-            attributeSymbols.get(symbolName).add(sym);
             return false;
         }
 
-        ArrayList<Symbol> newValue = new ArrayList<>();
-        newValue.add(sym);
-        attributeSymbols.put(symbolName, newValue);
+        attributeSymbols.put(symbolName, sym);
         return true;
     }
 
@@ -43,7 +38,7 @@ public class ClassSymbol extends IdSymbol implements Scope {
 
     @Override
     public Symbol lookup(String str) {
-        return attributeSymbols.containsKey(str) ? attributeSymbols.get(str).get(0) : methodSymbols.get(str);
+        return attributeSymbols.containsKey(str) ? attributeSymbols.get(str) : methodSymbols.get(str);
     }
 
     @Override
