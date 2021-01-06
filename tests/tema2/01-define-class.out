@@ -1,0 +1,20 @@
+Visiting class BB__
+Visiting class Int
+", line 3:1, Semantic error: Class Int is redefined
+Visiting class C
+", line 5:1, Semantic error: Class C has illegal parent Int
+Visiting class SELF_TYPE
+", line 7:1, Semantic error: Class has illegal name SELF_TYPE
+Visiting class D
+", line 9:1, Semantic error: Class D has illegal parent SELF_TYPE
+Visiting class D
+", line 11:1, Semantic error: Class D is redefined
+Visiting class E
+Visiting class F
+Visiting class G
+Visiting class Main
+", line 1:1, Semantic error: Class BB__ has undefined parent A
+", line 13:1, Semantic error: Inheritance cycle for class E
+", line 14:1, Semantic error: Inheritance cycle for class F
+", line 15:1, Semantic error: Inheritance cycle for class G
+Compilation halted

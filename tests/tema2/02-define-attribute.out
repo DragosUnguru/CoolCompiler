@@ -1,0 +1,7 @@
+Visiting class B
+Visiting class A
+Visiting class Main
+", line 6:5, Semantic error: Class A has attribute with illegal name self
+", line 8:5, Semantic error: Class A redefines attribute x
+", line 10:5, Semantic error: Class A redefines attribute x
+Compilation halted
