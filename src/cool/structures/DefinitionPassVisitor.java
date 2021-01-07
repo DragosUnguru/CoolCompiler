@@ -5,10 +5,11 @@ import cool.compiler.*;
 import static cool.structures.SymbolTable.*;
 
 public class DefinitionPassVisitor extends BasePassVisitor {
+    private static Integer ID = 0;
     private Scope currentScope;
 
     @Override
-    public Void visit(Program program) {
+    public TypeSymbol visit(Program program) {
         currentScope = globals;
 
         for (var coolClass : program.getClasses()) {
@@ -20,7 +21,7 @@ public class DefinitionPassVisitor extends BasePassVisitor {
     }
 
     @Override
-    public Void visit(CoolClass coolClass) {
+    public TypeSymbol visit(CoolClass coolClass) {
         // Get class name and create class scope
         String className = coolClass.getClassName().getToken().getText();
         ClassSymbol classSymbol = (ClassSymbol) currentScope.lookup(className);
@@ -57,7 +58,7 @@ public class DefinitionPassVisitor extends BasePassVisitor {
     }
 
     @Override
-    public Void visit(Id id) {
+    public TypeSymbol visit(Id id) {
 //        String idName = id.getToken().getText();
 //        IdSymbol symbol = new IdSymbol(idName);
 //
@@ -68,7 +69,7 @@ public class DefinitionPassVisitor extends BasePassVisitor {
     }
 
     @Override
-    public Void visit(VarDef varDef) {
+    public TypeSymbol visit(VarDef varDef) {
         Id varId = varDef.getName();
         Type varType = varDef.getType();
 
@@ -120,7 +121,7 @@ public class DefinitionPassVisitor extends BasePassVisitor {
     }
 
     @Override
-    public Void visit(MethodDef methodDef) {
+    public TypeSymbol visit(MethodDef methodDef) {
         Id methodId = methodDef.getName();
         Type methodReturnType = methodDef.getReturnType();
 
@@ -171,7 +172,7 @@ public class DefinitionPassVisitor extends BasePassVisitor {
     }
 
     @Override
-    public Void visit(Formal formal) {
+    public TypeSymbol visit(Formal formal) {
         Id formalId = formal.getName();
         Type formalType = formal.getType();
         String formalName = formalId.getToken().getText();
@@ -220,15 +221,18 @@ public class DefinitionPassVisitor extends BasePassVisitor {
     }
 
     @Override
-    public Void visit(LetIn letIn) {
-        LetInSymbol symbol = new LetInSymbol("name", currentScope);
+    public TypeSymbol visit(LetIn letIn) {
+        LetInSymbol symbol = new LetInSymbol((ID++).toString(), currentScope);
 
         currentScope = symbol;
         for (InitedFormal formal : letIn.getFormals()) {
             formal.accept(this);
         }
-        letIn.getBody().accept(this);
+        TypeSymbol resolvedType = letIn.getBody().accept(this);
         currentScope = currentScope.getParent();
+
+        symbol.setType(resolvedType);
+        return null;
     }
 
     /**
@@ -238,7 +242,52 @@ public class DefinitionPassVisitor extends BasePassVisitor {
      * @return
      */
     @Override
-    public Void visit(InitedFormal initedFormal) {
+    public TypeSymbol visit(InitedFormal initedFormal) {
+        Formal formal = initedFormal.getFormal();
+        Id formalId = formal.getName();
+        String formalName = formalId.getToken().getText();
+        String declaredTypeName = formal.getType().getToken().getText();
 
+        TypeSymbol typeSymbol = new TypeSymbol(declaredTypeName);
+        IdSymbol symbol = new IdSymbol(formalName, typeSymbol);
+
+        currentScope.add(symbol);
+
+        // If the declared type of the formal isn't defined
+        if (globals.lookup(declaredTypeName) == null) {
+            String errorMsg = ErrorMessages.LetIn.undefinedVarType(formalName, declaredTypeName);
+            error(formal.getType().getToken(), errorMsg);
+
+            return null;
+        }
+
+        // If the variable name is "self"
+        if (formalName.equals(SELF)) {
+            String errorMsg = ErrorMessages.LetIn.illegalNameSelf();
+            error(formal.getToken(), errorMsg);
+
+            return null;
+        }
+
+        // If an initialization expression is defined
+        Expression initExpr = initedFormal.getInitExpr();
+        if (initExpr != null) {
+            TypeSymbol resolvedType = initExpr.accept(this);
+
+            // If the declared type and the resolved type don't match
+            if (!resolvedType.getName().equals(declaredTypeName)) {
+                String errorMsg = ErrorMessages.LetIn.illegalInitExprType(formalName, declaredTypeName, resolvedType.getName());
+                error(formal.getType().getToken(), errorMsg);
+
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public TypeSymbol visit(Int intt) {
+        return BaseTypeSymbolFactory.getINT();
     }
 }

@@ -12,7 +12,7 @@ public class ClassPassVisitor extends BasePassVisitor {
     private static final List<String> ILLEGAL_PARENTS = List.of("String", "Bool", "Int", "SELF_TYPE");
 
     @Override
-    public Void visit(Program program) {
+    public TypeSymbol visit(Program program) {
         for (var coolClass : program.getClasses()) {
             if (coolClass != null)
                 coolClass.accept(this);
@@ -22,7 +22,7 @@ public class ClassPassVisitor extends BasePassVisitor {
     }
 
     @Override
-    public Void visit(CoolClass coolClass) {
+    public TypeSymbol visit(CoolClass coolClass) {
         // Get classes and superclasses name, init class symbol
         String className = coolClass.getClassName().getToken().getText();
         ClassSymbol classSymbol = new ClassSymbol(className, null);

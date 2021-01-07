@@ -2,143 +2,143 @@ package cool.structures;
 
 import cool.compiler.*;
 
-public abstract class BasePassVisitor implements ASTVisitor<Void> {
+public abstract class BasePassVisitor implements ASTVisitor<TypeSymbol> {
 
     protected final static String SELF = "self";
     protected final static String SELF_TYPE = "SELF_TYPE";
 
     @Override
-    public Void visit(Program program) {
+    public TypeSymbol visit(Program program) {
         return null;
     }
 
     @Override
-    public Void visit(Type type) {
+    public TypeSymbol visit(Type type) {
         return null;
     }
 
     @Override
-    public Void visit(Operation operation) {
+    public TypeSymbol visit(Operation operation) {
         return null;
     }
 
     @Override
-    public Void visit(Id id) {
+    public TypeSymbol visit(Id id) {
         return null;
     }
 
     @Override
-    public Void visit(Assign assign) {
+    public TypeSymbol visit(Assign assign) {
         return null;
     }
 
     @Override
-    public Void visit(MethodCall methodCall) {
+    public TypeSymbol visit(MethodCall methodCall) {
         return null;
     }
 
     @Override
-    public Void visit(StaticMethodCall staticMethodCall) {
+    public TypeSymbol visit(StaticMethodCall staticMethodCall) {
         return null;
     }
 
     @Override
-    public Void visit(If ifStatement) {
+    public TypeSymbol visit(If ifStatement) {
         return null;
     }
 
     @Override
-    public Void visit(While whileLoop) {
+    public TypeSymbol visit(While whileLoop) {
         return null;
     }
 
     @Override
-    public Void visit(InstructionBlock instructionBlock) {
+    public TypeSymbol visit(InstructionBlock instructionBlock) {
         return null;
     }
 
     @Override
-    public Void visit(LetIn letIn) {
+    public TypeSymbol visit(LetIn letIn) {
         return null;
     }
 
     @Override
-    public Void visit(Case caseStatement) {
+    public TypeSymbol visit(Case caseStatement) {
         return null;
     }
 
     @Override
-    public Void visit(Int intt) {
+    public TypeSymbol visit(Int intt) {
         return null;
     }
 
     @Override
-    public Void visit(CoolString string) {
+    public TypeSymbol visit(CoolString string) {
         return null;
     }
 
     @Override
-    public Void visit(Bool bool) {
+    public TypeSymbol visit(Bool bool) {
         return null;
     }
 
     @Override
-    public Void visit(New neww) {
+    public TypeSymbol visit(New neww) {
         return null;
     }
 
     @Override
-    public Void visit(Negation negation) {
+    public TypeSymbol visit(Negation negation) {
         return null;
     }
 
     @Override
-    public Void visit(IsVoid isVoid) {
+    public TypeSymbol visit(IsVoid IsVoid) {
         return null;
     }
 
     @Override
-    public Void visit(Relational relational) {
+    public TypeSymbol visit(Relational relational) {
         return null;
     }
 
     @Override
-    public Void visit(Arithmetic arithmetic) {
+    public TypeSymbol visit(Arithmetic arithmetic) {
         return null;
     }
 
     @Override
-    public Void visit(Not not) {
+    public TypeSymbol visit(Not not) {
         return null;
     }
 
     @Override
-    public Void visit(Paren paren) {
+    public TypeSymbol visit(Paren paren) {
         return null;
     }
 
     @Override
-    public Void visit(Formal formal) {
+    public TypeSymbol visit(Formal formal) {
         return null;
     }
 
     @Override
-    public Void visit(InitedFormal initedFormal) {
+    public TypeSymbol visit(InitedFormal initedFormal) {
         return null;
     }
 
     @Override
-    public Void visit(VarDef varDef) {
+    public TypeSymbol visit(VarDef varDef) {
         return null;
     }
 
     @Override
-    public Void visit(MethodDef methodDef) {
+    public TypeSymbol visit(MethodDef methodDef) {
         return null;
     }
 
     @Override
-    public Void visit(CoolClass coolClass) {
+    public TypeSymbol visit(CoolClass coolClass) {
         return null;
     }
 }

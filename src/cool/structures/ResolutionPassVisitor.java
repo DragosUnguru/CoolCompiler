@@ -11,7 +11,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
     private Scope currentScope;
 
     @Override
-    public Void visit(Program program) {
+    public TypeSymbol visit(Program program) {
         currentScope = globals;
 
         for (var coolClass : program.getClasses()) {
@@ -23,7 +23,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
     }
 
     @Override
-    public Void visit(CoolClass coolClass) {
+    public TypeSymbol visit(CoolClass coolClass) {
         String className = coolClass.getClassName().getToken().getText();
         ClassSymbol classSymbol = (ClassSymbol) currentScope.lookup(className);
 
@@ -55,7 +55,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
     }
 
     @Override
-    public Void visit(VarDef varDef) {
+    public TypeSymbol visit(VarDef varDef) {
         Id varId = varDef.getName();
 
         // Get actual names of the variable and variable's type
@@ -77,7 +77,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
     }
 
     @Override
-    public Void visit(MethodDef methodDef) {
+    public TypeSymbol visit(MethodDef methodDef) {
         Id methodId = methodDef.getName();
 
         // Get actual name and symbol of the method
