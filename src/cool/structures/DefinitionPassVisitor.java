@@ -58,16 +58,11 @@ public class DefinitionPassVisitor extends BasePassVisitor {
 
     @Override
     public Void visit(Id id) {
-        String idName = id.getToken().getText();
-        Symbol symbol = currentScope.lookup(idName);
-
-        if (symbol == null) {
-            // ErrorMsg not defined
-            return null;
-        }
-
-        id.setSymbol((IdSymbol) symbol);
-        id.setScope(currentScope);
+//        String idName = id.getToken().getText();
+//        IdSymbol symbol = new IdSymbol(idName);
+//
+//        id.setSymbol(symbol);
+//        id.setScope(currentScope);
 
         return null;
     }
@@ -85,10 +80,9 @@ public class DefinitionPassVisitor extends BasePassVisitor {
         String className = ((ClassSymbol) currentScope).getName();
 
         // Create symbol for variable and variable's type
-        IdSymbol varSymbol = new IdSymbol(varName);
         TypeSymbol typeSymbol = new TypeSymbol(typeName);
+        IdSymbol varSymbol = new IdSymbol(varName, typeSymbol);
 
-        varSymbol.setType(typeSymbol);
         varId.setScope(currentScope);
         varId.setSymbol(varSymbol);
 
@@ -123,5 +117,128 @@ public class DefinitionPassVisitor extends BasePassVisitor {
         }
 
         return null;
+    }
+
+    @Override
+    public Void visit(MethodDef methodDef) {
+        Id methodId = methodDef.getName();
+        Type methodReturnType = methodDef.getReturnType();
+
+        // Get actual names of the method and method's return type
+        String methodName = methodId.getToken().getText();
+        String returnTypeName = methodReturnType.getToken().getText();
+
+        // Current scope is always the class as the method definitions are made only within the class body
+        String className = ((ClassSymbol) currentScope).getName();
+
+        // Create symbol for method and method's return type
+        TypeSymbol typeSymbol = new TypeSymbol(returnTypeName);
+        MethodSymbol methodSymbol = new MethodSymbol(methodName, currentScope, typeSymbol, methodDef);
+        methodDef.getName().setSymbol(methodSymbol);
+        methodDef.getName().setScope(currentScope);
+
+        // If method is redefined within this scope
+        if (!currentScope.add(methodSymbol)) {
+            String errorMsg = ErrorMessages.MethodDefinitions.redefined(className, methodName);
+            error(methodDef.getToken(), errorMsg);
+
+            return null;
+        }
+
+        // If method return type is undefined
+        if (globals.lookup(returnTypeName) == null) {
+            String errorMsg = ErrorMessages.MethodDefinitions.undefinedReturnType(className, methodName, returnTypeName);
+            error(methodDef.getReturnType().getToken(), errorMsg);
+
+            return null;
+        }
+
+        // Visit method's body, formals
+        currentScope = methodSymbol;
+        methodDef.getName().accept(this);
+        methodDef.getReturnType().accept(this);
+
+        for (Formal formal : methodDef.getArgs()) {
+            formal.accept(this);
+        }
+
+        for (Expression expression : methodDef.getBody()) {
+            expression.accept(this);
+        }
+        currentScope = currentScope.getParent();
+
+        return null;
+    }
+
+    @Override
+    public Void visit(Formal formal) {
+        Id formalId = formal.getName();
+        Type formalType = formal.getType();
+        String formalName = formalId.getToken().getText();
+        String typeName = formalType.getToken().getText();
+
+        TypeSymbol typeSymbol = new TypeSymbol(typeName);
+        IdSymbol idSymbol = new IdSymbol(formalName, typeSymbol);
+
+        // Current scope is the method symbol. Parent scope represents the class
+        String methodName = ((MethodSymbol) currentScope).getName();
+        String className = ((ClassSymbol) currentScope.getParent()).getName();
+
+        // If formal is redefined
+        if (!currentScope.add(idSymbol)) {
+            String errorMsg = ErrorMessages.MethodArguments.redefined(className, methodName, formalName);
+            error(formal.getToken(), errorMsg);
+
+            return null;
+        }
+
+        // If formal has illegal name self
+        if (formalName.equals(SELF)) {
+            String errorMsg = ErrorMessages.MethodArguments.illegalNameSelf(className, methodName);
+            error(formal.getToken(), errorMsg);
+
+            return null;
+        }
+
+        // If formal is of illegal type SELF_TYPE
+        if (typeName.equals(SELF_TYPE)) {
+            String errorMsg = ErrorMessages.MethodArguments.illegalTypeSelfType(className, methodName, formalName);
+            error(formal.getType().getToken(), errorMsg);
+
+            return null;
+        }
+
+        // If formal is of undefined type
+        if (globals.lookup(typeName) == null) {
+            String errorMsg = ErrorMessages.MethodArguments.undefined(className, methodName, formalName, typeName);
+            error(formal.getType().getToken(), errorMsg);
+
+            return null;
+        }
+
+        return null;
+    }
+
+    @Override
+    public Void visit(LetIn letIn) {
+        LetInSymbol symbol = new LetInSymbol("name", currentScope);
+
+        currentScope = symbol;
+        for (InitedFormal formal : letIn.getFormals()) {
+            formal.accept(this);
+        }
+        letIn.getBody().accept(this);
+        currentScope = currentScope.getParent();
+    }
+
+    /**
+     * Formals of this type (with possible initialization expression)
+     * are exclusively part of letIn structures
+     * @param initedFormal
+     * @return
+     */
+    @Override
+    public Void visit(InitedFormal initedFormal) {
+
     }
 }

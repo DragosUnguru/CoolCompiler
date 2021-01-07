@@ -49,7 +49,7 @@ public class SymbolTable {
         }
     }
 
-    public static Symbol getOverriddenSymbol(ClassSymbol startingClassSymbol, Symbol needle) {
+    public static IdSymbol getOverriddenSymbol(ClassSymbol startingClassSymbol, IdSymbol needle) {
         ClassSymbol classIterator = inheritances.get(startingClassSymbol);
         Set<ClassSymbol> classSet = new HashSet<>();
 
@@ -59,8 +59,28 @@ public class SymbolTable {
             String needleName = needle.getName();
             Symbol result = classIterator.lookup(needleName);
 
-            if (result != null) {
-                return result;
+            if (result instanceof IdSymbol) {
+                return (IdSymbol) result;
+            }
+
+            classIterator = inheritances.get(classIterator);
+        }
+
+        return null;
+    }
+
+    public static MethodSymbol getOverriddenSymbol(ClassSymbol startingClassSymbol, MethodSymbol needle) {
+        ClassSymbol classIterator = inheritances.get(startingClassSymbol);
+        Set<ClassSymbol> classSet = new HashSet<>();
+
+        // Search in all inherited classes until we've reached the top
+        // or encountered an inheritance cycle
+        while (classIterator != null || !classSet.add(classIterator)) {
+            String needleName = needle.getName();
+            Symbol result = classIterator.lookup(needleName);
+
+            if (result instanceof MethodSymbol) {
+                return (MethodSymbol) result;
             }
 
             classIterator = inheritances.get(classIterator);

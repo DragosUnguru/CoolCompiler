@@ -1,5 +1,7 @@
 package cool.structures;
 
+import cool.compiler.MethodDef;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -7,10 +9,17 @@ public class MethodSymbol extends IdSymbol implements Scope {
 
     protected Map<String, Symbol> symbols = new LinkedHashMap<>();
     protected Scope parent;
+    protected MethodDef methodDef;
 
     public MethodSymbol(String name, Scope parent) {
         super(name);
         this.parent = parent;
+    }
+
+    public MethodSymbol(String name, Scope parent, TypeSymbol typeSymbol, MethodDef methodDef) {
+        super(name, typeSymbol);
+        this.parent = parent;
+        this.methodDef = methodDef;
     }
 
     @Override
