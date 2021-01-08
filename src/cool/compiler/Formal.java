@@ -1,5 +1,6 @@
 package cool.compiler;
 
+import cool.structures.IdSymbol;
 import org.antlr.v4.runtime.Token;
 
 /**
@@ -9,6 +10,15 @@ import org.antlr.v4.runtime.Token;
 public class Formal extends ASTNode {
     private Id name;
     private Type type;
+    private IdSymbol symbol;
+
+    public IdSymbol getSymbol() {
+        return symbol;
+    }
+
+    public void setSymbol(IdSymbol symbol) {
+        this.symbol = symbol;
+    }
 
     public Id getName() {
         return name;

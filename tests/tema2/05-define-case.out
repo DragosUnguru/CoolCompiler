@@ -1,2 +1,2 @@
-Visiting class A
-Visiting class Main
+"05-define-case.cl", line 7:13, Semantic error: Case variable has illegal name self
+Compilation halted

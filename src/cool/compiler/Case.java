@@ -1,5 +1,6 @@
 package cool.compiler;
 
+import cool.structures.CaseSymbol;
 import org.antlr.v4.runtime.Token;
 
 import java.util.List;
@@ -8,6 +9,15 @@ public class Case extends Expression {
     private Expression cond;
     private List<Formal> formals;
     private List<Expression> then;
+    private CaseSymbol symbol;
+
+    public CaseSymbol getSymbol() {
+        return symbol;
+    }
+
+    public void setSymbol(CaseSymbol symbol) {
+        this.symbol = symbol;
+    }
 
     public Expression getCond() {
         return cond;

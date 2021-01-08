@@ -2,6 +2,7 @@ package cool.structures;
 
 import cool.compiler.*;
 
+
 import static cool.structures.SymbolTable.*;
 
 public class DefinitionPassVisitor extends BasePassVisitor {
@@ -22,6 +23,11 @@ public class DefinitionPassVisitor extends BasePassVisitor {
 
     @Override
     public TypeSymbol visit(CoolClass coolClass) {
+//        // Classes are crossed in the same order they are set as children. Set context accordingly
+//        if (!(globalContext.getChild(CLASS_IDX) instanceof TerminalNode)) {
+//            context = (ParserRuleContext) globalContext.getChild(CLASS_IDX++);
+//        }
+
         // Get class name and create class scope
         String className = coolClass.getClassName().getToken().getText();
         ClassSymbol classSymbol = (ClassSymbol) currentScope.lookup(className);
@@ -59,12 +65,9 @@ public class DefinitionPassVisitor extends BasePassVisitor {
 
     @Override
     public TypeSymbol visit(Id id) {
-//        String idName = id.getToken().getText();
-//        IdSymbol symbol = new IdSymbol(idName);
-//
-//        id.setSymbol(symbol);
-//        id.setScope(currentScope);
-
+        if (id.getScope() == null) {
+            id.setScope(currentScope);
+        }
         return null;
     }
 
@@ -111,8 +114,8 @@ public class DefinitionPassVisitor extends BasePassVisitor {
             return null;
         }
 
-        varDef.getType().accept(this);
-        varDef.getName().accept(this);
+//        varDef.getType().accept(this);
+//        varDef.getName().accept(this);
         if (varDef.getExpr() != null) {
             varDef.getExpr().accept(this);
         }
@@ -139,7 +142,7 @@ public class DefinitionPassVisitor extends BasePassVisitor {
         methodDef.getName().setScope(currentScope);
 
         // If method is redefined within this scope
-        if (!currentScope.add(methodSymbol)) {
+        if (!((ClassSymbol) currentScope).add(methodSymbol)) {
             String errorMsg = ErrorMessages.MethodDefinitions.redefined(className, methodName);
             error(methodDef.getToken(), errorMsg);
 
@@ -156,8 +159,8 @@ public class DefinitionPassVisitor extends BasePassVisitor {
 
         // Visit method's body, formals
         currentScope = methodSymbol;
-        methodDef.getName().accept(this);
-        methodDef.getReturnType().accept(this);
+//        methodDef.getName().accept(this);
+//        methodDef.getReturnType().accept(this);
 
         for (Formal formal : methodDef.getArgs()) {
             formal.accept(this);
@@ -180,13 +183,19 @@ public class DefinitionPassVisitor extends BasePassVisitor {
 
         TypeSymbol typeSymbol = new TypeSymbol(typeName);
         IdSymbol idSymbol = new IdSymbol(formalName, typeSymbol);
+        formal.setSymbol(idSymbol);
 
-        // Current scope is the method symbol. Parent scope represents the class
-        String methodName = ((MethodSymbol) currentScope).getName();
-        String className = ((ClassSymbol) currentScope.getParent()).getName();
+        // LetIn and Case structures don't have redefinition errors
+        if (!(currentScope instanceof MethodSymbol)) {
+            if (!currentScope.add(idSymbol)) {
+                return null;
+            }
+        }
+        // If formal is a method argument and has been redefined
+        else if (!currentScope.add(idSymbol)) {
+            String methodName = ((MethodSymbol) currentScope).getName();
+            String className = ((ClassSymbol) currentScope.getParent()).getName();
 
-        // If formal is redefined
-        if (!currentScope.add(idSymbol)) {
             String errorMsg = ErrorMessages.MethodArguments.redefined(className, methodName, formalName);
             error(formal.getToken(), errorMsg);
 
@@ -195,15 +204,15 @@ public class DefinitionPassVisitor extends BasePassVisitor {
 
         // If formal has illegal name self
         if (formalName.equals(SELF)) {
-            String errorMsg = ErrorMessages.MethodArguments.illegalNameSelf(className, methodName);
+            String errorMsg = ErrorMessages.illegalNameSelf(currentScope);
             error(formal.getToken(), errorMsg);
 
             return null;
         }
 
         // If formal is of illegal type SELF_TYPE
-        if (typeName.equals(SELF_TYPE)) {
-            String errorMsg = ErrorMessages.MethodArguments.illegalTypeSelfType(className, methodName, formalName);
+        if (!(currentScope instanceof LetInSymbol) && typeName.equals(SELF_TYPE)) {
+            String errorMsg = ErrorMessages.illegalTypeSelfType(currentScope, formalName);
             error(formal.getType().getToken(), errorMsg);
 
             return null;
@@ -211,7 +220,7 @@ public class DefinitionPassVisitor extends BasePassVisitor {
 
         // If formal is of undefined type
         if (globals.lookup(typeName) == null) {
-            String errorMsg = ErrorMessages.MethodArguments.undefined(className, methodName, formalName, typeName);
+            String errorMsg = ErrorMessages.undefinedType(currentScope, formalName, typeName);
             error(formal.getType().getToken(), errorMsg);
 
             return null;
@@ -224,14 +233,16 @@ public class DefinitionPassVisitor extends BasePassVisitor {
     public TypeSymbol visit(LetIn letIn) {
         LetInSymbol symbol = new LetInSymbol((ID++).toString(), currentScope);
 
+        letIn.setSymbol(symbol);
+        currentScope.add(symbol);
+
         currentScope = symbol;
         for (InitedFormal formal : letIn.getFormals()) {
             formal.accept(this);
         }
-        TypeSymbol resolvedType = letIn.getBody().accept(this);
+        letIn.getBody().accept(this);
         currentScope = currentScope.getParent();
 
-        symbol.setType(resolvedType);
         return null;
     }
 
@@ -243,51 +254,62 @@ public class DefinitionPassVisitor extends BasePassVisitor {
      */
     @Override
     public TypeSymbol visit(InitedFormal initedFormal) {
-        Formal formal = initedFormal.getFormal();
-        Id formalId = formal.getName();
-        String formalName = formalId.getToken().getText();
-        String declaredTypeName = formal.getType().getToken().getText();
+        initedFormal.getFormal().accept(this);
+        return null;
+    }
 
-        TypeSymbol typeSymbol = new TypeSymbol(declaredTypeName);
-        IdSymbol symbol = new IdSymbol(formalName, typeSymbol);
+    @Override
+    public TypeSymbol visit(Case caseStatement) {
+        CaseSymbol symbol = new CaseSymbol((ID++).toString(), currentScope);
+        caseStatement.setSymbol(symbol);
 
         currentScope.add(symbol);
-
-        // If the declared type of the formal isn't defined
-        if (globals.lookup(declaredTypeName) == null) {
-            String errorMsg = ErrorMessages.LetIn.undefinedVarType(formalName, declaredTypeName);
-            error(formal.getType().getToken(), errorMsg);
-
-            return null;
+        currentScope = symbol;
+        caseStatement.getCond().accept(this);
+        for (Formal formal : caseStatement.getFormals()) {
+            formal.accept(this);
         }
-
-        // If the variable name is "self"
-        if (formalName.equals(SELF)) {
-            String errorMsg = ErrorMessages.LetIn.illegalNameSelf();
-            error(formal.getToken(), errorMsg);
-
-            return null;
+        for (Expression expression : caseStatement.getThen()) {
+            expression.accept(this);
         }
-
-        // If an initialization expression is defined
-        Expression initExpr = initedFormal.getInitExpr();
-        if (initExpr != null) {
-            TypeSymbol resolvedType = initExpr.accept(this);
-
-            // If the declared type and the resolved type don't match
-            if (!resolvedType.getName().equals(declaredTypeName)) {
-                String errorMsg = ErrorMessages.LetIn.illegalInitExprType(formalName, declaredTypeName, resolvedType.getName());
-                error(formal.getType().getToken(), errorMsg);
-
-                return null;
-            }
-        }
+        currentScope = currentScope.getParent();
 
         return null;
     }
 
     @Override
-    public TypeSymbol visit(Int intt) {
-        return BaseTypeSymbolFactory.getINT();
+    public TypeSymbol visit(Assign assign) {
+        assign.getName().accept(this);
+        assign.getExpr().accept(this);
+
+        return null;
+    }
+
+    @Override
+    public TypeSymbol visit(Arithmetic arithmetic) {
+        arithmetic.getLeft().accept(this);
+        arithmetic.getRight().accept(this);
+
+        return null;
+    }
+
+    @Override
+    public TypeSymbol visit(Relational relational) {
+        relational.getLeft().accept(this);
+        relational.getRight().accept(this);
+
+        return null;
+    }
+
+    @Override
+    public TypeSymbol visit(Negation negation) {
+        negation.getExpr().accept(this);
+        return null;
+    }
+
+    @Override
+    public TypeSymbol visit(Paren paren) {
+        paren.getExpr().accept(this);
+        return null;
     }
 }

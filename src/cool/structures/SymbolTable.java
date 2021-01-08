@@ -1,8 +1,13 @@
 package cool.structures;
 
+import java.io.File;
 import java.util.*;
 
+import cool.parser.CoolParser;
 import org.antlr.v4.runtime.*;
+import cool.compiler.Compiler;
+
+import static cool.compiler.Compiler.FILENAME;
 
 public class SymbolTable {
 
@@ -17,7 +22,12 @@ public class SymbolTable {
     protected static Scope globals;
     protected static Map<ClassSymbol, ClassSymbol> inheritances;
     private static boolean semanticErrors;
-    
+
+    /**
+     * Defines the basic classes, their methods and return types of the COOL's language.
+     * Defines the global scope and inserts the said classes in it alongside with other
+     * utility structures
+     */
     public static void defineBasicClasses() {
         globals = new DefaultScope(null);
         inheritances = new LinkedHashMap<>();
@@ -34,10 +44,10 @@ public class SymbolTable {
             // Add the base methods of the said class to its scope
             for (String method : classMethods) {
                 MethodSymbol methodSymbol = new MethodSymbol(method, classSymbol);
-                TypeSymbol returnType = new TypeSymbol(className);
+                TypeSymbol returnType = BaseTypeSymbolFactory.get(className);
 
                 if (method.equals("length")) {
-                    returnType = new TypeSymbol("Int");
+                    returnType = BaseTypeSymbolFactory.getINT();
                 }
 
                 methodSymbol.setType(returnType);
@@ -49,6 +59,14 @@ public class SymbolTable {
         }
     }
 
+    /**
+     * By searching through the inheritance structure of the classes, search
+     * and return the overridden attribute of the startingClassSymbol's superclass
+     * @param startingClassSymbol the subclass symbol containing the definition of the "needle" attribute
+     * @param needle subclass attribute id symbol
+     * @return id symbol of the superclass overridden attribute, null if the there is no overridden
+     * attribute in the inherited classes
+     */
     public static IdSymbol getOverriddenSymbol(ClassSymbol startingClassSymbol, IdSymbol needle) {
         ClassSymbol classIterator = inheritances.get(startingClassSymbol);
         Set<ClassSymbol> classSet = new HashSet<>();
@@ -69,6 +87,14 @@ public class SymbolTable {
         return null;
     }
 
+    /**
+     * Overloaded method. By searching through the inheritance structure of the classes, search
+     * and return the overridden method of the startingClassSymbol's superclass
+     * @param startingClassSymbol the subclass symbol containing the definition of the "needle" method
+     * @param needle subclass method symbol
+     * @return method symbol of the superclass overridden method, null if the there is no overridden
+     * method in the inherited classes
+     */
     public static MethodSymbol getOverriddenSymbol(ClassSymbol startingClassSymbol, MethodSymbol needle) {
         ClassSymbol classIterator = inheritances.get(startingClassSymbol);
         Set<ClassSymbol> classSet = new HashSet<>();
@@ -100,12 +126,12 @@ public class SymbolTable {
     public static void error(/*ParserRuleContext ctx, */Token info, String str) {
         /*while (! (ctx.getParent() instanceof CoolParser.ProgramContext))
             ctx = ctx.getParent();*/
-        
-        String message = /*"\"" + new File(Compiler.fileNames.get(ctx)).getName()
-                + */"\", line " + info.getLine()
+
+        String message = "\"" + FILENAME
+                + "\", line " + info.getLine()
                 + ":" + (info.getCharPositionInLine() + 1)
                 + ", Semantic error: " + str;
-        
+
         System.err.println(message);
         semanticErrors = true;
     }

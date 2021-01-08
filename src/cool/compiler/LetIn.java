@@ -1,5 +1,6 @@
 package cool.compiler;
 
+import cool.structures.LetInSymbol;
 import org.antlr.v4.runtime.Token;
 
 import java.util.List;
@@ -7,6 +8,15 @@ import java.util.List;
 public class LetIn extends Expression {
     private List<InitedFormal> formals;
     private Expression body;
+    private LetInSymbol symbol;
+
+    public LetInSymbol getSymbol() {
+        return symbol;
+    }
+
+    public void setSymbol(LetInSymbol symbol) {
+        this.symbol = symbol;
+    }
 
     public List<InitedFormal> getFormals() {
         return formals;

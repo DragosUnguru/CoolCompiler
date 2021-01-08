@@ -36,6 +36,11 @@ public class DefaultScope implements Scope {
     }
 
     @Override
+    public Symbol searchInScope(String str) {
+        return symbols.get(str);
+    }
+
+    @Override
     public Scope getParent() {
         return parent;
     }

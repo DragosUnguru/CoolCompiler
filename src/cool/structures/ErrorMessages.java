@@ -3,6 +3,48 @@ package cool.structures;
 public final class ErrorMessages {
     private ErrorMessages() { }
 
+    public static String illegalNameSelf(Scope currentScope) {
+        if (currentScope instanceof MethodSymbol) {
+            // Current scope is the method, parent scope is the class. Extract names
+            String methodName = ((MethodSymbol) currentScope).getName();
+            String className = ((ClassSymbol) currentScope.getParent()).getName();
+
+            return ErrorMessages.MethodArguments.illegalNameSelf(className, methodName);
+        }
+        else if (currentScope instanceof LetInSymbol) {
+            return ErrorMessages.LetIn.illegalNameSelf();
+        }
+        // Else it's instance of CaseSymbol
+        return ErrorMessages.Case.illegalNameSelf();
+    }
+
+    public static String undefinedType(Scope currentScope, String formalName, String typeName) {
+        if (currentScope instanceof MethodSymbol) {
+            // Current scope is the method, parent scope is the class. Extract names
+            String methodName = ((MethodSymbol) currentScope).getName();
+            String className = ((ClassSymbol) currentScope.getParent()).getName();
+
+            return ErrorMessages.MethodArguments.undefined(className, methodName, formalName, typeName);
+        }
+        else if (currentScope instanceof LetInSymbol) {
+            return ErrorMessages.LetIn.undefinedVarType(formalName, typeName);
+        }
+        // Else it's instance of CaseSymbol
+        return ErrorMessages.Case.undefinedVarType(formalName, typeName);
+    }
+
+    public static String illegalTypeSelfType(Scope currentScope, String formalName) {
+        if (currentScope instanceof MethodSymbol) {
+            // Current scope is the method, parent scope is the class. Extract names
+            String methodName = ((MethodSymbol) currentScope).getName();
+            String className = ((ClassSymbol) currentScope.getParent()).getName();
+
+            return ErrorMessages.MethodArguments.illegalTypeSelfType(className, methodName, formalName);
+        }
+        // Else it's instance of CaseSymbol
+        return ErrorMessages.Case.illegalTypeSelfType(formalName);
+    }
+
     public static final class ClassDefinitions {
         public static String illegalNameSelfType() {
             return "Class has illegal name SELF_TYPE";

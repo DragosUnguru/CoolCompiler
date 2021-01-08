@@ -8,7 +8,6 @@ import java.util.List;
 import static cool.structures.SymbolTable.*;
 
 public class ClassPassVisitor extends BasePassVisitor {
-
     private static final List<String> ILLEGAL_PARENTS = List.of("String", "Bool", "Int", "SELF_TYPE");
 
     @Override
@@ -23,6 +22,11 @@ public class ClassPassVisitor extends BasePassVisitor {
 
     @Override
     public TypeSymbol visit(CoolClass coolClass) {
+//        // Classes are crossed in the same order they are set as children. Set context accordingly
+//        if (!(globalContext.getChild(CLASS_IDX) instanceof TerminalNode)) {
+//            context = (ParserRuleContext) globalContext.getChild(CLASS_IDX++);
+//        }
+
         // Get classes and superclasses name, init class symbol
         String className = coolClass.getClassName().getToken().getText();
         ClassSymbol classSymbol = new ClassSymbol(className, null);

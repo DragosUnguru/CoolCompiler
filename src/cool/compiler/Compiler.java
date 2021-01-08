@@ -7,7 +7,6 @@ import cool.structures.ResolutionPassVisitor;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
-import cool.lexer.*;
 import cool.parser.*;
 import cool.structures.SymbolTable;
 
@@ -16,6 +15,7 @@ import java.io.*;
 
 public class Compiler {
     // Annotates class nodes with the names of files where they are defined.
+    public static String FILENAME;
     public static ParseTreeProperty<String> fileNames = new ParseTreeProperty<>();
 
     public static void main(String[] args) throws IOException {
@@ -23,7 +23,9 @@ public class Compiler {
             System.err.println("No file(s) given");
             return;
         }
-        
+
+        FILENAME = args[0].substring(args[0].lastIndexOf("\\") + 1);
+
         CoolLexer lexer = null;
         CommonTokenStream tokenStream = null;
         CoolParser parser = null;
@@ -104,7 +106,7 @@ public class Compiler {
                 // Add the current parse tree's children to the global tree.
                 for (int i = 0; i < tree.getChildCount(); i++)
                     globalTree.addAnyChild(tree.getChild(i));
-                    
+
             // Annotate class nodes with file names, to be used later
             // in semantic error messages.
             for (int i = 0; i < tree.getChildCount(); i++) {
@@ -124,10 +126,10 @@ public class Compiler {
             System.err.println("Compilation halted");
             return;
         }
-        
+
         // Populate global scope.
         SymbolTable.defineBasicClasses();
-        
+
         // TODO Semantic analysis
         var astConstructionVisitor = new ASTConstructionVisitor();
 
@@ -143,7 +145,6 @@ public class Compiler {
 
         if (SymbolTable.hasSemanticErrors()) {
             System.err.println("Compilation halted");
-            return;
         }
     }
 }

@@ -3,6 +3,8 @@ package cool.structures;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static cool.structures.BasePassVisitor.SELF;
+
 public class ClassSymbol extends IdSymbol implements Scope {
     protected Map<String, Symbol> attributeSymbols = new LinkedHashMap<>();
     protected Map<String, Symbol> methodSymbols = new LinkedHashMap<>();
@@ -11,6 +13,9 @@ public class ClassSymbol extends IdSymbol implements Scope {
     public ClassSymbol(String name, Scope parent) {
         super(name);
         this.parent = parent;
+
+        // Also define "self" as an attribute of current's class type as return type
+        this.attributeSymbols.put(SELF, new IdSymbol(SELF, new TypeSymbol(name)));
     }
 
     @Override
@@ -38,6 +43,11 @@ public class ClassSymbol extends IdSymbol implements Scope {
 
     @Override
     public Symbol lookup(String str) {
+        return attributeSymbols.containsKey(str) ? attributeSymbols.get(str) : methodSymbols.get(str);
+    }
+
+    @Override
+    public Symbol searchInScope(String str) {
         return attributeSymbols.containsKey(str) ? attributeSymbols.get(str) : methodSymbols.get(str);
     }
 

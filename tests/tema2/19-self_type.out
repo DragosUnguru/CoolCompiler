@@ -1,5 +1,7 @@
-Visiting class A
-Visiting class B
-Visiting class C
-Visiting class D
-Visiting class Main
+"19-self_type.cl", line 2:9, Semantic error: Class A has attribute x with undefined type SELF_TYPE
+"19-self_type.cl", line 5:24, Semantic error: Class A has method h with undefined return type SELF_TYPE
+"19-self_type.cl", line 18:12, Semantic error: Class A has method f1 with undefined return type SELF_TYPE
+"19-self_type.cl", line 56:12, Semantic error: Class D has method f1 with undefined return type SELF_TYPE
+"19-self_type.cl", line 2:22, Semantic error: Undefined identifier self
+"19-self_type.cl", line 18:24, Semantic error: Undefined identifier self
+Compilation halted

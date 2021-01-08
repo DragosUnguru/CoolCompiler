@@ -1,4 +1,2 @@
-Visiting class A
-Visiting class B
-Visiting class C
-Visiting class Main
+"16-type-attr.cl", line 4:9, Semantic error: Type String of initialization expression of attribute z is incompatible with declared type Int
+Compilation halted
