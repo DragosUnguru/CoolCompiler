@@ -24,11 +24,6 @@ public class ResolutionPassVisitor extends BasePassVisitor {
 
     @Override
     public TypeSymbol visit(CoolClass coolClass) {
-//        // Classes are crossed in the same order they are set as children. Set context accordingly
-//        if (!(globalContext.getChild(CLASS_IDX) instanceof TerminalNode)) {
-//            context = (ParserRuleContext) globalContext.getChild(CLASS_IDX++);
-//        }
-
         String className = coolClass.getClassName().getToken().getText();
         ClassSymbol classSymbol = (ClassSymbol) globals.lookup(className);
 
@@ -80,12 +75,12 @@ public class ResolutionPassVisitor extends BasePassVisitor {
 
         if (varDef.getExpr() != null) {
             // Visit initialization expression and check for errors
-            TypeSymbol initializedTypeSymbol = varDef.getExpr().accept(this);
-            if (initializedTypeSymbol == null) {
+            TypeSymbol resolvedTypeSymbol = varDef.getExpr().accept(this);
+            if (resolvedTypeSymbol == null) {
                 return null;
             }
 
-            String evaluatedTypeName = initializedTypeSymbol.getName();
+            String evaluatedTypeName = resolvedTypeSymbol.getName();
 
             // If initialization resolved type doesn't match the declared type
             if (!evaluatedTypeName.equals(typeName)) {
@@ -165,6 +160,8 @@ public class ResolutionPassVisitor extends BasePassVisitor {
             return null;
         }
 
+        System.out.println("Method " + methodName + " resolved type to: " + lastTypeSymbol.getName());
+
         // If body type doesn't match the declared type
         if (!methodName.equals("main") && !lastTypeSymbol.getName().equals(symbol.getType().getName())) {
             String errorMsg = ErrorMessages.MethodDefinitions.illegalBodyReturnType(methodName, symbol.getType().getName(), lastTypeSymbol.getName());
@@ -191,6 +188,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         // Symbol was visited and assigned a scope in the definition pass,
         // but wasn't forward defined either
         IdSymbol symbol = (IdSymbol) currentScope.lookup(id.getToken().getText());
+
         if (symbol == null) {
             String errorMsg = ErrorMessages.Variables.undefined(id.getToken().getText());
             error(id.getToken(), errorMsg);
@@ -204,7 +202,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
 
     @Override
     public TypeSymbol visit(Formal formal) {
-        return formal.getSymbol().getType();
+        return formal.getSymbol() == null ? null : formal.getSymbol().getType();
     }
 
     @Override
@@ -321,7 +319,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         if (!evaluatedType.getName().equals(assigneeType.getName())) {
             String errorMsg = ErrorMessages.Assignments.illegalType(assigneeSymbol.getName(),
                     assigneeType.getName(), evaluatedType.getName());
-            error(assign.getToken(), errorMsg);
+            error(assign.getName().getToken(), errorMsg);
 
             return null;
         }
@@ -334,31 +332,68 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         TypeSymbol leftType = arithmetic.getLeft().accept(this);
         TypeSymbol rightType = arithmetic.getRight().accept(this);
 
-        if (leftType == null || rightType == null) {
+        String operation = arithmetic.getOperation().getToken().getText();
+        String expectingType = BaseTypeSymbolFactory.getINT().getName();
+
+        // If any of the operands isn't of type Int
+        if (leftType != null && !leftType.getName().equals(expectingType)) {
+            String errorMsg = ErrorMessages.Operators.operandNotInt(operation, leftType.getName());
+            error(arithmetic.getLeft().getToken(), errorMsg);
+
             return null;
         }
 
-        // Arithmetic operations are valid only if both expressions evaluate to INT type
-        String expectingType = BaseTypeSymbolFactory.getINT().getName();
-        if (leftType.getName().equals(rightType.getName()) &&
-                leftType.getName().equals(expectingType)) {
-            return leftType;
+        if (rightType != null && !rightType.getName().equals(expectingType)) {
+            String errorMsg = ErrorMessages.Operators.operandNotInt(operation, rightType.getName());
+            error(arithmetic.getRight().getToken(), errorMsg);
+
+            return null;
         }
 
-        String operation = arithmetic.getOperation().getToken().getText();
-        String firstWrongType = leftType.getName().equals(expectingType) ? rightType.getName() : leftType.getName();
-        String errorMsg = ErrorMessages.Operators.operandNotInt(operation, firstWrongType);
-        error(arithmetic.getToken(), errorMsg);
-
-        return null;
+        return BaseTypeSymbolFactory.getINT();
     }
 
     @Override
     public TypeSymbol visit(Relational relational) {
-        relational.getLeft().accept(this);
-        relational.getRight().accept(this);
+        TypeSymbol leftType = relational.getLeft().accept(this);
+        TypeSymbol rightType = relational.getRight().accept(this);
+        TypeSymbol intType = BaseTypeSymbolFactory.getINT();
+        String currentOperation = relational.getOperation().getToken().getText();
+        final List<String> LESS_SYMBOLS = List.of("<", "<=");
 
-        return null;
+        // Different error message and logic for less than symbols
+        if (LESS_SYMBOLS.contains(currentOperation)) {
+            // If one of the operands isn't of type Int
+            if (leftType != null && !leftType.getName().equals(intType.getName())) {
+                String errorMsg = ErrorMessages.Operators.operandNotInt("<", leftType.getName());
+                error(relational.getLeft().getToken(), errorMsg);
+
+                return null;
+            }
+            if (rightType != null && !rightType.getName().equals(intType.getName())) {
+                String errorMsg = ErrorMessages.Operators.operandNotInt("<", rightType.getName());
+                error(relational.getRight().getToken(), errorMsg);
+
+                return null;
+            }
+        }
+        // Different error messages and logic for equals
+        else {
+            // If no error occurred in any of the operands and both are of different primitive types
+            if (leftType != null && rightType != null &&
+                BaseTypeSymbolFactory.isPrimitive(leftType.getName()) &&
+                BaseTypeSymbolFactory.isPrimitive(rightType.getName()) &&
+                !leftType.getName().equals(rightType.getName())) {
+
+                String errorMsg = ErrorMessages.Operators.illegalCompare(leftType.getName(), rightType.getName());
+                error(relational.getOperation().getToken(), errorMsg);
+
+                return null;
+            }
+        }
+
+        // Pretty dumb logic if you ask me
+        return BaseTypeSymbolFactory.getBOOL();
     }
 
     @Override
@@ -372,12 +407,32 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         // Negation accepts ints exclusively, reject any other type
         if (!resolvedType.getName().equals(BaseTypeSymbolFactory.getINT().getName())) {
             String errorMsg = ErrorMessages.Operators.operandNotInt("~", resolvedType.getName());
-            error(negation.getToken(), errorMsg);
+            error(negation.getExpr().getToken(), errorMsg);
 
             return null;
         }
 
         return BaseTypeSymbolFactory.getINT();
+    }
+
+    @Override
+    public TypeSymbol visit(Not not) {
+        TypeSymbol acceptedType = BaseTypeSymbolFactory.getBOOL();
+
+        // Visit expression and check for errors
+        TypeSymbol resolvedType = not.getExpr().accept(this);
+        if (resolvedType == null) {
+            return null;
+        }
+
+        if (!resolvedType.getName().equals(acceptedType.getName())) {
+            String errorMsg = ErrorMessages.Operators.operandNotBool("not", resolvedType.getName());
+            error(not.getExpr().getToken(), errorMsg);
+
+            return null;
+        }
+
+        return acceptedType;
     }
 
     @Override
@@ -387,6 +442,9 @@ public class ResolutionPassVisitor extends BasePassVisitor {
 
     @Override
     public TypeSymbol visit(CoolString string) {
+        if (string.getToken().getText().equals("true") || string.getToken().getText().equals("false")) {
+            return BaseTypeSymbolFactory.getBOOL();
+        }
         return BaseTypeSymbolFactory.getSTRING();
     }
 
@@ -397,11 +455,6 @@ public class ResolutionPassVisitor extends BasePassVisitor {
 
     @Override
     public TypeSymbol visit(Paren paren) {
-        TypeSymbol returnType = paren.getExpr().accept(this);
-
-        if (returnType == null) {
-            return null;
-        }
-        return BaseTypeSymbolFactory.getINT();
+        return paren.getExpr().accept(this);
     }
 }

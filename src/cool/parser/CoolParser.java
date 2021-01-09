@@ -1299,20 +1299,20 @@ public class CoolParser extends Parser {
 				break;
 			case 9:
 				{
-				_localctx = new CoolStringContext(_localctx);
+				_localctx = new BoolContext(_localctx);
 				_ctx = _localctx;
 				_prevctx = _localctx;
 				setState(140);
-				match(STRING);
+				match(BOOL);
 				}
 				break;
 			case 10:
 				{
-				_localctx = new BoolContext(_localctx);
+				_localctx = new CoolStringContext(_localctx);
 				_ctx = _localctx;
 				_prevctx = _localctx;
 				setState(141);
-				match(BOOL);
+				match(STRING);
 				}
 				break;
 			case 11:
@@ -1603,7 +1603,7 @@ public class CoolParser extends Parser {
 		"\u0085\7\26\2\2\u0085\u0087\3\2\2\2\u0086\u0081\3\2\2\2\u0087\u0088\3"+
 		"\2\2\2\u0088\u0086\3\2\2\2\u0088\u0089\3\2\2\2\u0089\u008a\3\2\2\2\u008a"+
 		"\u008b\7\20\2\2\u008b\u00a0\3\2\2\2\u008c\u00a0\7.\2\2\u008d\u00a0\7/"+
-		"\2\2\u008e\u00a0\7)\2\2\u008f\u00a0\7\25\2\2\u0090\u0091\7\22\2\2\u0091"+
+		"\2\2\u008e\u00a0\7\25\2\2\u008f\u00a0\7)\2\2\u0090\u0091\7\22\2\2\u0091"+
 		"\u00a0\7-\2\2\u0092\u0093\7(\2\2\u0093\u00a0\5\f\7\n\u0094\u0095\7\23"+
 		"\2\2\u0095\u00a0\5\f\7\t\u0096\u0097\7.\2\2\u0097\u0098\7$\2\2\u0098\u00a0"+
 		"\5\f\7\5\u0099\u009a\7\24\2\2\u009a\u00a0\5\f\7\4\u009b\u009c\7\31\2\2"+

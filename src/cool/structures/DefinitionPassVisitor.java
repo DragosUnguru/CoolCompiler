@@ -183,16 +183,10 @@ public class DefinitionPassVisitor extends BasePassVisitor {
 
         TypeSymbol typeSymbol = new TypeSymbol(typeName);
         IdSymbol idSymbol = new IdSymbol(formalName, typeSymbol);
-        formal.setSymbol(idSymbol);
+//        formal.setSymbol(idSymbol);
 
-        // LetIn and Case structures don't have redefinition errors
-        if (!(currentScope instanceof MethodSymbol)) {
-            if (!currentScope.add(idSymbol)) {
-                return null;
-            }
-        }
         // If formal is a method argument and has been redefined
-        else if (!currentScope.add(idSymbol)) {
+        if (currentScope instanceof MethodSymbol && !currentScope.add(idSymbol)) {
             String methodName = ((MethodSymbol) currentScope).getName();
             String className = ((ClassSymbol) currentScope.getParent()).getName();
 
@@ -225,6 +219,14 @@ public class DefinitionPassVisitor extends BasePassVisitor {
 
             return null;
         }
+
+        // LetIn and Case structures don't have redefinition errors
+        if (!(currentScope instanceof MethodSymbol) && !currentScope.add(idSymbol)) {
+            if (!currentScope.add(idSymbol)) {
+                return null;
+            }
+        }
+        formal.setSymbol(idSymbol);
 
         return null;
     }
@@ -310,6 +312,12 @@ public class DefinitionPassVisitor extends BasePassVisitor {
     @Override
     public TypeSymbol visit(Paren paren) {
         paren.getExpr().accept(this);
+        return null;
+    }
+
+    @Override
+    public TypeSymbol visit(Not not) {
+        not.getExpr().accept(this);
         return null;
     }
 }

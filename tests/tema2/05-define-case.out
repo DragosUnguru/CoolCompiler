@@ -1,2 +1,6 @@
 "05-define-case.cl", line 7:13, Semantic error: Case variable has illegal name self
+"05-define-case.cl", line 8:20, Semantic error: Case variable x has illegal type SELF_TYPE
+"05-define-case.cl", line 9:20, Semantic error: Case variable x has undefined type C
+Method f resolved type to: Int
+Method main resolved type to: Int
 Compilation halted

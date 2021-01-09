@@ -1,6 +1,9 @@
+Method f resolved type to: B
 "09-type-assignment.cl", line 7:11, Semantic error: Type B of the body of the method f is incompatible with declared return type Object
 "09-type-assignment.cl", line 12:9, Semantic error: Type C of assigned expression is incompatible with declared type B of identifier b
 "09-type-assignment.cl", line 16:9, Semantic error: Type B of assigned expression is incompatible with declared type C of identifier c
+Method i resolved type to: A
 "09-type-assignment.cl", line 19:11, Semantic error: Type A of the body of the method i is incompatible with declared return type Object
 "09-type-assignment.cl", line 24:9, Semantic error: Type Int of assigned expression is incompatible with declared type Bool of identifier x
+Method main resolved type to: Int
 Compilation halted

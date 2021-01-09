@@ -201,6 +201,10 @@ public final class ErrorMessages {
             return "Operand of " + operation + " has type " + foundType + " instead of Int";
         }
 
+        public static String operandNotBool(String operation, String foundType) {
+            return "Operand of " + operation + " has type " + foundType + " instead of Bool";
+        }
+
         public static String illegalCompare(String operandType1, String operandType2) {
             return "Cannot compare " + operandType1 + " with " + operandType2;
         }

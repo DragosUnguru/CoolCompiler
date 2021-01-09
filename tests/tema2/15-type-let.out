@@ -1,6 +1,8 @@
 "15-type-let.cl", line 3:29, Semantic error: Undefined identifier u
-"15-type-let.cl", line 4:22, Semantic error: Type String of initialization expression of identifier y is incompatible with declared type Int
+"15-type-let.cl", line 4:22, Semantic error: Type Bool of initialization expression of identifier y is incompatible with declared type Int
+Method f resolved type to: Int
 "15-type-let.cl", line 2:18, Semantic error: Type Int of the body of the method f is incompatible with declared return type Object
 "15-type-let.cl", line 15:29, Semantic error: Undefined identifier x
 "15-type-let.cl", line 14:9, Semantic error: Type Int of assigned expression is incompatible with declared type Bool of identifier u
+Method main resolved type to: Int
 Compilation halted

@@ -41,8 +41,8 @@ expr
     | CASE cond=expr OF (formals+=formal CASE_THEN then+=expr SEMICOLON)+ ESAC                  # case
     | ID                                                                                        # id
     | INT                                                                                       # int
-    | STRING                                                                                    # coolString
     | BOOL                                                                                      # bool
+    | STRING                                                                                    # coolString
     | NEW type=TYPE                                                                             # new
     | TILDE e=expr                                                                              # negation
     | ISVOID e=expr                                                                             # isVoid

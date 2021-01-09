@@ -37,4 +37,8 @@ public class BaseTypeSymbolFactory {
     public static TypeSymbol get(String type) {
         return MAPPED.get(type);
     }
+
+    public static boolean isPrimitive(String type) {
+        return MAPPED.containsKey(type);
+    }
 }

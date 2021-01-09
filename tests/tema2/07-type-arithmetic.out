@@ -1,3 +1,5 @@
-"07-type-arithmetic.cl", line 4:22, Semantic error: Operand of * has type Bool instead of Int
-"07-type-arithmetic.cl", line 4:35, Semantic error: Operand of ~ has type String instead of Int
+"07-type-arithmetic.cl", line 4:20, Semantic error: Operand of * has type Bool instead of Int
+"07-type-arithmetic.cl", line 4:36, Semantic error: Operand of ~ has type String instead of Int
+"07-type-arithmetic.cl", line 4:44, Semantic error: Operand of - has type Bool instead of Int
+Method main resolved type to: Int
 Compilation halted
