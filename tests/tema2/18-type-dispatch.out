@@ -1,0 +1,12 @@
+Exception in thread "main" java.lang.NullPointerException: Cannot invoke "cool.structures.TypeSymbol.getName()" because "lastTypeSymbol" is null
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:171)
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:13)
+	at cool.compiler.MethodDef.accept(MethodDef.java:58)
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:49)
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:13)
+	at cool.compiler.CoolClass.accept(CoolClass.java:44)
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:20)
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:13)
+	at cool.compiler.Program.accept(Program.java:24)
+	at cool.compiler.Compiler.main(Compiler.java:144)
+	at cool.tester.Tester2.main(Tester2.java:34)

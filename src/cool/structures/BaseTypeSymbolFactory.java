@@ -3,6 +3,9 @@ package cool.structures;
 import java.util.Map;
 
 public class BaseTypeSymbolFactory {
+    public static final String BOOL_TRUE = "true";
+    public static final String BOOL_FALSE = "false";
+    public static final String MAIN_METHOD = "main";
 
     private static final TypeSymbol INT = new TypeSymbol("Int");
     private static final TypeSymbol BOOL = new TypeSymbol("Bool");

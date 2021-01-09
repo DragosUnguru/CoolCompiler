@@ -63,6 +63,12 @@ public class DefinitionPassVisitor extends BasePassVisitor {
         if (id.getScope() == null) {
             id.setScope(currentScope);
         }
+
+//        if (currentScope.lookup(id.getToken().getText()) == null) {
+//            String errorMsg = ErrorMessages.Variables.undefined(id.getToken().getText());
+//            error(id.getToken(), errorMsg);
+//        }
+
         return null;
     }
 
@@ -178,7 +184,6 @@ public class DefinitionPassVisitor extends BasePassVisitor {
 
         TypeSymbol typeSymbol = new TypeSymbol(typeName);
         IdSymbol idSymbol = new IdSymbol(formalName, typeSymbol);
-//        formal.setSymbol(idSymbol);
 
         // If formal is a method argument and has been redefined
         if (currentScope instanceof MethodSymbol && !currentScope.add(idSymbol)) {
@@ -215,13 +220,16 @@ public class DefinitionPassVisitor extends BasePassVisitor {
             return null;
         }
 
-        // LetIn and Case structures don't have redefinition errors
-        if (!(currentScope instanceof MethodSymbol) && !currentScope.add(idSymbol)) {
-            if (!currentScope.add(idSymbol)) {
-                return null;
-            }
-        }
+//        // LetIn and Case structures don't have redefinition errors
+//        if (!(currentScope instanceof MethodSymbol) && !currentScope.add(idSymbol)) {
+//            if (!currentScope.add(idSymbol)) {
+//                return null;
+//            }
+//        }
+        currentScope.add(idSymbol);
         formal.setSymbol(idSymbol);
+        formal.getName().setScope(currentScope);
+        formal.getName().setSymbol(idSymbol);
 
         return null;
     }
@@ -252,6 +260,11 @@ public class DefinitionPassVisitor extends BasePassVisitor {
     @Override
     public TypeSymbol visit(InitedFormal initedFormal) {
         initedFormal.getFormal().accept(this);
+
+        // LetIn's initialization expressions of formals
+        if (initedFormal.getInitExpr() != null) {
+            initedFormal.getInitExpr().accept(this);
+        }
         return null;
     }
 
@@ -330,6 +343,14 @@ public class DefinitionPassVisitor extends BasePassVisitor {
         ifStatement.getThen().accept(this);
         ifStatement.getElseOutcome().accept(this);
 
+        return null;
+    }
+
+    @Override
+    public TypeSymbol visit(InstructionBlock instructionBlock) {
+        for (Expression expression : instructionBlock.getBody()) {
+            expression.accept(this);
+        }
         return null;
     }
 }

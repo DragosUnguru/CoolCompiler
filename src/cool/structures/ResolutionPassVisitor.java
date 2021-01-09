@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static cool.structures.BaseTypeSymbolFactory.MAIN_METHOD;
 import static cool.structures.SymbolTable.*;
 
 public class ResolutionPassVisitor extends BasePassVisitor {
@@ -55,10 +56,11 @@ public class ResolutionPassVisitor extends BasePassVisitor {
     @Override
     public TypeSymbol visit(VarDef varDef) {
         Id varId = varDef.getName();
+        TypeSymbol varDefinedType = varId.getSymbol().getType();
 
         // Get actual names of the variable and variable's type
         String varName = varId.getToken().getText();
-        String typeName = varDef.getType().getToken().getText();
+        String typeName = varDefinedType.getName();
         IdSymbol symbol = varId.getSymbol();
         ClassSymbol currentScope = (ClassSymbol) varId.getScope();
 
@@ -82,10 +84,14 @@ public class ResolutionPassVisitor extends BasePassVisitor {
 
             String evaluatedTypeName = resolvedTypeSymbol.getName();
 
+            // Also check if it's a subclass of the expected type
+            ClassSymbol resolvedClass = (ClassSymbol) globals.lookup(resolvedTypeSymbol.getName());
+            ClassSymbol expectingClass = (ClassSymbol) globals.lookup(varDefinedType.getName());
+
             // If initialization resolved type doesn't match the declared type
-            if (!evaluatedTypeName.equals(typeName)) {
+            if (!evaluatedTypeName.equals(typeName) && !isSuperclass(resolvedClass, expectingClass)) {
                 String errorMsg = ErrorMessages.AttributeDefinitions.illegalInitExpr(varName, typeName, evaluatedTypeName);
-                error(varDef.getType().getToken(), errorMsg);
+                error(varDef.getExpr().getToken(), errorMsg);
 
                 return null;
             }
@@ -151,16 +157,13 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         }
 
         TypeSymbol lastTypeSymbol = null;
-        TypeSymbol runType;
+        Expression lastExpression = null;
         for (Expression expression : methodDef.getBody()) {
-            runType = expression.accept(this);
-            if (expression instanceof Id) {
-                lastTypeSymbol = runType;
-            }
+            lastTypeSymbol = expression.accept(this);
+            lastExpression = expression;
         }
 
-        // The evaluated method's body type is given by the last expression
-        if (lastTypeSymbol == null) {
+        if (symbol.getType().getName().equals(BaseTypeSymbolFactory.getOBJECT().getName())) {
             return null;
         }
 
@@ -169,10 +172,10 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         ClassSymbol expectingClass = (ClassSymbol) globals.lookup(symbol.getType().getName());
 
         // If body type doesn't match the declared type
-        if (!methodName.equals("main") && !lastTypeSymbol.getName().equals(symbol.getType().getName()) &&
+        if (!methodName.equals(MAIN_METHOD) && !lastTypeSymbol.getName().equals(symbol.getType().getName()) &&
             !isSuperclass(resolvedClass, expectingClass)) {
             String errorMsg = ErrorMessages.MethodDefinitions.illegalBodyReturnType(methodName, symbol.getType().getName(), lastTypeSymbol.getName());
-            error(methodDef.getReturnType().getToken(), errorMsg);
+            error(lastExpression.getToken(), errorMsg);
 
             return null;
         }
@@ -237,9 +240,12 @@ public class ResolutionPassVisitor extends BasePassVisitor {
             String declaredTypeName = declaredTypeSymbol.getName();
 
             // If the declared type and the resolved type don't match
-            if (!resolvedTypeName.equals(declaredTypeSymbol.getName())) {
+            ClassSymbol gotClass = (ClassSymbol) globals.lookup(resolvedType.getName());
+            ClassSymbol expectedClass = (ClassSymbol) globals.lookup(declaredTypeSymbol.getName());
+
+            if (!resolvedTypeName.equals(declaredTypeSymbol.getName()) && !isSuperclass(gotClass, expectedClass)) {
                 String errorMsg = ErrorMessages.LetIn.illegalInitExprType(formalName, declaredTypeName, resolvedType.getName());
-                error(formal.getType().getToken(), errorMsg);
+                error(initExpr.getToken(), errorMsg);
 
                 return null;
             }
@@ -291,20 +297,15 @@ public class ResolutionPassVisitor extends BasePassVisitor {
             resolvedTypes.add(expression.accept(this));
         }
 
-        int noOfFormals = declaredTypes.size();
-        for (int i = 0; i < noOfFormals; ++i) {
-            TypeSymbol declaredType = declaredTypes.get(i);
-            TypeSymbol resolvedType = resolvedTypes.get(i);
-
-            // Final type of the case structure is the resolved type of the expression of the branch
-            // that has the formal with the same type as the condition expression
-            if (declaredType != null && resolvedType != null && declaredType.getName().equals(conditionType.getName())) {
-                symbol.setType(resolvedType);
-                return resolvedType;
+        // Compute the lowest class that inherits all resolved types
+        List<ClassSymbol> classSymbols = new ArrayList<>();
+        for (TypeSymbol resolvedType : resolvedTypes) {
+            if (resolvedType != null) {
+                classSymbols.add((ClassSymbol) globals.lookup(resolvedType.getName()));
             }
         }
 
-        return null;
+        return getCommonSuperclass(classSymbols).getType();
     }
 
     @Override
@@ -520,21 +521,36 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         // Resolve and check condition for errors
         TypeSymbol condSymbol = ifStatement.getCond().accept(this);
         if (condSymbol == null) {
-            return null;
+            return BaseTypeSymbolFactory.getOBJECT();
         }
 
         // Check condition type
         if (!condSymbol.getName().equals(BaseTypeSymbolFactory.getBOOL().getName())) {
             String errorMsg = ErrorMessages.Conditions.illegalWhileCond(condSymbol.getName(), "If");
             error(ifStatement.getCond().getToken(), errorMsg);
+
+            return BaseTypeSymbolFactory.getOBJECT();
         }
 
-        // Visit bodies
-        if (ifStatement.getThen().accept(this) == null ||
-            ifStatement.getElseOutcome().accept(this) == null) {
+        TypeSymbol thenBranch = ifStatement.getThen().accept(this);
+        TypeSymbol elseBranch = ifStatement.getElseOutcome().accept(this);
+
+        // Visit bodies and check for errors
+        if (thenBranch == null || elseBranch == null) {
             return null;
         }
 
-        return BaseTypeSymbolFactory.getOBJECT();
+        return thenBranch;
+    }
+
+    // TODO: vezi ca de aici isi lua cu muie test 19
+    @Override
+    public TypeSymbol visit(InstructionBlock instructionBlock) {
+        TypeSymbol lastSymbol = BaseTypeSymbolFactory.getOBJECT();
+        for (Expression expression : instructionBlock.getBody()) {
+            lastSymbol = expression.accept(this);
+        }
+
+        return lastSymbol;
     }
 }

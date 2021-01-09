@@ -118,7 +118,7 @@ public final class ErrorMessages {
         }
 
         public static String illegalBodyReturnType(String methodName, String declaredType, String bodyType) {
-            return "Type " + bodyType + " of the body of the method " + methodName + " is incompatible with declared " +
+            return "Type " + bodyType + " of the body of method " + methodName + " is incompatible with declared " +
                     "return type " + declaredType;
         }
 

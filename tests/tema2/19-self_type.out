@@ -3,6 +3,22 @@
 "19-self_type.cl", line 18:12, Semantic error: Class A has method f1 with undefined return type SELF_TYPE
 "19-self_type.cl", line 56:12, Semantic error: Class D has method f1 with undefined return type SELF_TYPE
 "19-self_type.cl", line 2:22, Semantic error: Undefined identifier self
-"19-self_type.cl", line 18:24, Semantic error: Undefined identifier self
-"19-self_type.cl", line 29:17, Semantic error: Type B of initialization expression of identifier a is incompatible with declared type A
-Compilation halted
+"19-self_type.cl", line 7:35, Semantic error: Undefined identifier z
+Exception in thread "main" java.lang.NullPointerException: Cannot invoke "cool.structures.LetInSymbol.setType(cool.structures.TypeSymbol)" because "symbol" is null
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:277)
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:13)
+	at cool.compiler.LetIn.accept(LetIn.java:44)
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:556)
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:13)
+	at cool.compiler.InstructionBlock.accept(InstructionBlock.java:24)
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:163)
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:13)
+	at cool.compiler.MethodDef.accept(MethodDef.java:58)
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:49)
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:13)
+	at cool.compiler.CoolClass.accept(CoolClass.java:44)
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:20)
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:13)
+	at cool.compiler.Program.accept(Program.java:24)
+	at cool.compiler.Compiler.main(Compiler.java:144)
+	at cool.tester.Tester2.main(Tester2.java:34)

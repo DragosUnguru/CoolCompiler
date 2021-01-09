@@ -1,7 +1,4 @@
-"15-type-let.cl", line 3:29, Semantic error: Undefined identifier u
-"15-type-let.cl", line 4:22, Semantic error: Type Bool of initialization expression of identifier y is incompatible with declared type Int
-"15-type-let.cl", line 7:23, Semantic error: Type C of initialization expression of identifier b2 is incompatible with declared type B
-"15-type-let.cl", line 8:23, Semantic error: Type B of initialization expression of identifier c is incompatible with declared type C
-"15-type-let.cl", line 15:29, Semantic error: Undefined identifier x
+"15-type-let.cl", line 4:29, Semantic error: Type Bool of initialization expression of identifier y is incompatible with declared type Int
+"15-type-let.cl", line 8:28, Semantic error: Type B of initialization expression of identifier c is incompatible with declared type C
 "15-type-let.cl", line 14:14, Semantic error: Type Int of assigned expression is incompatible with declared type Bool of identifier u
 Compilation halted

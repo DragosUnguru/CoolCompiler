@@ -22,14 +22,10 @@ public class ClassPassVisitor extends BasePassVisitor {
 
     @Override
     public TypeSymbol visit(CoolClass coolClass) {
-//        // Classes are crossed in the same order they are set as children. Set context accordingly
-//        if (!(globalContext.getChild(CLASS_IDX) instanceof TerminalNode)) {
-//            context = (ParserRuleContext) globalContext.getChild(CLASS_IDX++);
-//        }
-
         // Get classes and superclasses name, init class symbol
         String className = coolClass.getClassName().getToken().getText();
         ClassSymbol classSymbol = new ClassSymbol(className, null);
+        classSymbol.setType(new TypeSymbol(className));
 
         // If class is redefined
         if (!globals.add(classSymbol)) {
