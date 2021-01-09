@@ -8,11 +8,13 @@ public class BaseTypeSymbolFactory {
     private static final TypeSymbol BOOL = new TypeSymbol("Bool");
     private static final TypeSymbol STRING = new TypeSymbol("String");
     private static final TypeSymbol IO = new TypeSymbol("IO");
+    private static final TypeSymbol OBJECT = new TypeSymbol("Object");
     private static final Map<String, TypeSymbol> MAPPED = Map.of(
             "Int", INT,
             "Bool", BOOL,
             "String", STRING,
-            "IO", IO
+            "IO", IO,
+            "Object", OBJECT
     );
 
 
@@ -32,6 +34,10 @@ public class BaseTypeSymbolFactory {
 
     public static TypeSymbol getINT() {
         return INT;
+    }
+
+    public static TypeSymbol getOBJECT() {
+        return OBJECT;
     }
 
     public static TypeSymbol get(String type) {

@@ -23,11 +23,6 @@ public class DefinitionPassVisitor extends BasePassVisitor {
 
     @Override
     public TypeSymbol visit(CoolClass coolClass) {
-//        // Classes are crossed in the same order they are set as children. Set context accordingly
-//        if (!(globalContext.getChild(CLASS_IDX) instanceof TerminalNode)) {
-//            context = (ParserRuleContext) globalContext.getChild(CLASS_IDX++);
-//        }
-
         // Get class name and create class scope
         String className = coolClass.getClassName().getToken().getText();
         ClassSymbol classSymbol = (ClassSymbol) currentScope.lookup(className);
@@ -318,6 +313,23 @@ public class DefinitionPassVisitor extends BasePassVisitor {
     @Override
     public TypeSymbol visit(Not not) {
         not.getExpr().accept(this);
+        return null;
+    }
+
+    @Override
+    public TypeSymbol visit(While whileLoop) {
+        whileLoop.getCond().accept(this);
+        whileLoop.getBody().accept(this);
+
+        return null;
+    }
+
+    @Override
+    public TypeSymbol visit(If ifStatement) {
+        ifStatement.getCond().accept(this);
+        ifStatement.getThen().accept(this);
+        ifStatement.getElseOutcome().accept(this);
+
         return null;
     }
 }

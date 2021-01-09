@@ -151,8 +151,12 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         }
 
         TypeSymbol lastTypeSymbol = null;
+        TypeSymbol runType;
         for (Expression expression : methodDef.getBody()) {
-            lastTypeSymbol = expression.accept(this);
+            runType = expression.accept(this);
+            if (expression instanceof Id) {
+                lastTypeSymbol = runType;
+            }
         }
 
         // The evaluated method's body type is given by the last expression
@@ -160,10 +164,13 @@ public class ResolutionPassVisitor extends BasePassVisitor {
             return null;
         }
 
-        System.out.println("Method " + methodName + " resolved type to: " + lastTypeSymbol.getName());
+        // Also check if it's a subclass of the expected type
+        ClassSymbol resolvedClass = (ClassSymbol) globals.lookup(lastTypeSymbol.getName());
+        ClassSymbol expectingClass = (ClassSymbol) globals.lookup(symbol.getType().getName());
 
         // If body type doesn't match the declared type
-        if (!methodName.equals("main") && !lastTypeSymbol.getName().equals(symbol.getType().getName())) {
+        if (!methodName.equals("main") && !lastTypeSymbol.getName().equals(symbol.getType().getName()) &&
+            !isSuperclass(resolvedClass, expectingClass)) {
             String errorMsg = ErrorMessages.MethodDefinitions.illegalBodyReturnType(methodName, symbol.getType().getName(), lastTypeSymbol.getName());
             error(methodDef.getReturnType().getToken(), errorMsg);
 
@@ -302,6 +309,13 @@ public class ResolutionPassVisitor extends BasePassVisitor {
 
     @Override
     public TypeSymbol visit(Assign assign) {
+        // Cannot assign to self
+        if (assign.getName().getToken().getText().equals(SELF)) {
+            String errorMsg = ErrorMessages.Assignments.illegalAssignToSelf();
+            error(assign.getName().getToken(), errorMsg);
+
+            return null;
+        }
         // Visit Id to set it's symbol and check if it's undefined
         TypeSymbol assigneeType = assign.getName().accept(this);
         if (assigneeType == null) {
@@ -315,11 +329,14 @@ public class ResolutionPassVisitor extends BasePassVisitor {
             return null;
         }
 
+        ClassSymbol gotClass = (ClassSymbol) globals.lookup(evaluatedType.getName());
+        ClassSymbol expectedClass = (ClassSymbol) globals.lookup(assigneeType.getName());
+
         // If evaluated type of the assignment doesn't match with the defined type of the variable
-        if (!evaluatedType.getName().equals(assigneeType.getName())) {
+        if (!evaluatedType.getName().equals(assigneeType.getName()) && !isSuperclass(gotClass, expectedClass)) {
             String errorMsg = ErrorMessages.Assignments.illegalType(assigneeSymbol.getName(),
                     assigneeType.getName(), evaluatedType.getName());
-            error(assign.getName().getToken(), errorMsg);
+            error(assign.getExpr().getToken(), errorMsg);
 
             return null;
         }
@@ -456,5 +473,68 @@ public class ResolutionPassVisitor extends BasePassVisitor {
     @Override
     public TypeSymbol visit(Paren paren) {
         return paren.getExpr().accept(this);
+    }
+
+    @Override
+    public TypeSymbol visit(New neww) {
+        String typeName = neww.getType().getToken().getText();
+
+        if (globals.lookup(typeName) == null) {
+            String errorMsg = ErrorMessages.Assignments.undefinedTypeWhenInstancing(typeName);
+            error(neww.getType().getToken(), errorMsg);
+
+            return null;
+        }
+
+        return new TypeSymbol(neww.getType().getToken().getText());
+    }
+
+    @Override
+    public TypeSymbol visit(IsVoid isVoid) {
+        return BaseTypeSymbolFactory.getBOOL();
+    }
+
+    @Override
+    public TypeSymbol visit(While whileLoop) {
+        // Resolve and check condition for errors
+        TypeSymbol condSymbol = whileLoop.getCond().accept(this);
+        if (condSymbol == null) {
+            return null;
+        }
+
+        // Check condition type
+        if (!condSymbol.getName().equals(BaseTypeSymbolFactory.getBOOL().getName())) {
+            String errorMsg = ErrorMessages.Conditions.illegalWhileCond(condSymbol.getName(), "While");
+            error(whileLoop.getCond().getToken(), errorMsg);
+        }
+
+        if (whileLoop.getBody().accept(this) == null) {
+            return null;
+        }
+
+        return BaseTypeSymbolFactory.getOBJECT();
+    }
+
+    @Override
+    public TypeSymbol visit(If ifStatement) {
+        // Resolve and check condition for errors
+        TypeSymbol condSymbol = ifStatement.getCond().accept(this);
+        if (condSymbol == null) {
+            return null;
+        }
+
+        // Check condition type
+        if (!condSymbol.getName().equals(BaseTypeSymbolFactory.getBOOL().getName())) {
+            String errorMsg = ErrorMessages.Conditions.illegalWhileCond(condSymbol.getName(), "If");
+            error(ifStatement.getCond().getToken(), errorMsg);
+        }
+
+        // Visit bodies
+        if (ifStatement.getThen().accept(this) == null ||
+            ifStatement.getElseOutcome().accept(this) == null) {
+            return null;
+        }
+
+        return BaseTypeSymbolFactory.getOBJECT();
     }
 }

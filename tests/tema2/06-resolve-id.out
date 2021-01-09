@@ -1,5 +1,2 @@
 "06-resolve-id.cl", line 9:24, Semantic error: Undefined identifier y
-Method f resolved type to: Int
-Method g resolved type to: A
-Method main resolved type to: Int
 Compilation halted

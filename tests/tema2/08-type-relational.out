@@ -3,5 +3,4 @@
 "08-type-relational.cl", line 8:19, Semantic error: Cannot compare Int with Bool
 "08-type-relational.cl", line 9:19, Semantic error: Cannot compare Int with String
 "08-type-relational.cl", line 10:23, Semantic error: Cannot compare String with Bool
-Method main resolved type to: Int
 Compilation halted

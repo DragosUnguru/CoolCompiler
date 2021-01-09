@@ -4,7 +4,5 @@
 "19-self_type.cl", line 56:12, Semantic error: Class D has method f1 with undefined return type SELF_TYPE
 "19-self_type.cl", line 2:22, Semantic error: Undefined identifier self
 "19-self_type.cl", line 18:24, Semantic error: Undefined identifier self
-Method f2 resolved type to: A
-Method g resolved type to: Int
-Method main resolved type to: Int
+"19-self_type.cl", line 29:17, Semantic error: Type B of initialization expression of identifier a is incompatible with declared type A
 Compilation halted

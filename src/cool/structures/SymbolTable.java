@@ -114,6 +114,24 @@ public class SymbolTable {
 
         return null;
     }
+
+
+    public static boolean isSuperclass(ClassSymbol subClass, ClassSymbol superClass) {
+        ClassSymbol classIterator = inheritances.get(subClass);
+        Set<ClassSymbol> classSet = new HashSet<>();
+
+        // Search in all inherited classes until we've reached the top
+        // or encountered an inheritance cycle
+        while (classIterator != null || !classSet.add(classIterator)) {
+            if (classIterator.getName().equals(superClass.getName())) {
+                return true;
+            }
+
+            classIterator = inheritances.get(classIterator);
+        }
+
+        return false;
+    }
     
     /**
      * Displays a semantic error message.

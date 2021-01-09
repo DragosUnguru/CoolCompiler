@@ -1,1 +1,6 @@
-Method main resolved type to: Int
+"12-type-if.cl", line 3:14, Semantic error: Type Object of assigned expression is incompatible with declared type Int of identifier x
+"12-type-if.cl", line 7:17, Semantic error: If condition has type Int instead of Bool
+"12-type-if.cl", line 7:14, Semantic error: Type Object of assigned expression is incompatible with declared type Int of identifier x
+"12-type-if.cl", line 11:14, Semantic error: Type Object of assigned expression is incompatible with declared type B of identifier b
+"12-type-if.cl", line 15:14, Semantic error: Type Object of assigned expression is incompatible with declared type C of identifier c
+Compilation halted

@@ -7,5 +7,4 @@
 "01-define-class.cl", line 13:7, Semantic error: Inheritance cycle for class E
 "01-define-class.cl", line 14:7, Semantic error: Inheritance cycle for class F
 "01-define-class.cl", line 15:7, Semantic error: Inheritance cycle for class G
-Method main resolved type to: Int
 Compilation halted
