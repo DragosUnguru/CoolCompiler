@@ -48,7 +48,6 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         for (Feature feature : coolClass.getFeatures()) {
             feature.accept(this);
         }
-        // Restore scope
 
         return null;
     }
@@ -445,7 +444,6 @@ public class ResolutionPassVisitor extends BasePassVisitor {
             }
         }
 
-        // Pretty dumb logic if you ask me
         return BaseTypeSymbolFactory.getBOOL();
     }
 
@@ -513,16 +511,6 @@ public class ResolutionPassVisitor extends BasePassVisitor {
 
     @Override
     public TypeSymbol visit(New neww) {
-//        String typeName = neww.getType().getToken().getText();
-//
-//        if (!typeName.equals(SELF_TYPE) && globals.lookup(typeName) == null) {
-//            String errorMsg = ErrorMessages.Assignments.undefinedTypeWhenInstancing(typeName);
-//            error(neww.getType().getToken(), errorMsg);
-//
-//            return null;
-//        }
-//
-//        return new TypeSymbol(typeName);
         return neww.getType().accept(this);
     }
 
@@ -605,7 +593,6 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         return joinTypeOfBranches.getType();
     }
 
-    // TODO: vezi ca de aici isi lua cu muie test 19
     @Override
     public TypeSymbol visit(InstructionBlock instructionBlock) {
         TypeSymbol lastSymbol = BaseTypeSymbolFactory.getOBJECT();
@@ -616,7 +603,6 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         return lastSymbol;
     }
 
-    // TODO: todo plm
     @Override
     public TypeSymbol visit(StaticMethodCall staticMethodCall) {
         // Fetch scope and lookup from the said scope for the method's definition
@@ -650,7 +636,6 @@ public class ResolutionPassVisitor extends BasePassVisitor {
             Expression expression = staticMethodCall.getArgs().get(i);
             TypeSymbol callerArgType = expression.accept(this);
             TypeSymbol methodDefArgType = dispatchedMethodSymbol.getArgType(i);
-//            TypeSymbol methodDefArgType = dispatchedMethodSymbol.methodDef.getArgs().get(i).getSymbol().getType();
 
             // Check for superclass types as well
             ClassSymbol callClass = (ClassSymbol) globals.lookup(callerArgType.getName());

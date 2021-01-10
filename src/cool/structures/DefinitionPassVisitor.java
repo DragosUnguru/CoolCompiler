@@ -2,7 +2,6 @@ package cool.structures;
 
 import cool.compiler.*;
 
-
 import static cool.structures.SymbolTable.*;
 
 public class DefinitionPassVisitor extends BasePassVisitor {
@@ -230,11 +229,26 @@ public class DefinitionPassVisitor extends BasePassVisitor {
 
     @Override
     public TypeSymbol visit(InitedFormal initedFormal) {
-        initedFormal.getFormal().accept(this);
 
-        // LetIn's initialization expressions of formals
-        if (initedFormal.getInitExpr() != null) {
-            initedFormal.getInitExpr().accept(this);
+        if (((LetInSymbol) currentScope).isEmpty()) {
+            Scope copyScope = currentScope;
+
+            // First's formal initialization expression can't have the scope of the
+            // formal declaration itself, so set the scope as the parent scope for the first formal
+            // eg.: let y : Int <- y  should deem y as undefined
+            currentScope = currentScope.getParent();
+            if (initedFormal.getInitExpr() != null) {
+                initedFormal.getInitExpr().accept(this);
+            }
+            currentScope = copyScope;
+
+            initedFormal.getFormal().accept(this);
+        } else {
+            initedFormal.getFormal().accept(this);
+
+            if (initedFormal.getInitExpr() != null) {
+                initedFormal.getInitExpr().accept(this);
+            }
         }
         return null;
     }

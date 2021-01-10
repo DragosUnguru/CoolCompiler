@@ -48,4 +48,8 @@ public class LetInSymbol extends IdSymbol implements Scope {
     public Scope getParent() {
         return this.parent;
     }
+
+    public boolean isEmpty() {
+        return symbols.isEmpty();
+    }
 }

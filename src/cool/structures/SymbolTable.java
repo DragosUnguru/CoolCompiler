@@ -92,6 +92,7 @@ public class SymbolTable {
     /**
      * By searching through the inheritance structure of the classes, search
      * and return the overridden attribute of the startingClassSymbol's superclass
+     *
      * @param startingClassSymbol the subclass symbol containing the definition of the "needle" attribute
      * @param needle subclass attribute id symbol
      * @return id symbol of the superclass overridden attribute, null if the there is no overridden
@@ -116,6 +117,16 @@ public class SymbolTable {
         return null;
     }
 
+    /**
+     * Overloaded class for the scenario where the Symbol isn't reachable and won't search for a strong-typed instance.
+     * By searching through the inheritance structure of the classes, search
+     * and return the overridden symbol of the startingClassSymbol's superclass
+     *
+     * @param startingClassSymbol the subclass symbol containing the definition of the "needle" symbol
+     * @param needle name of the symbol to search for
+     * @return symbol of the superclass overridden attribute, null if the there is no overridden
+     * attribute in the inherited classes
+     */
     public static Symbol getOverriddenSymbol(ClassSymbol startingClassSymbol, String needle) {
         ClassSymbol classIterator = inheritances.get(startingClassSymbol);
 
@@ -137,6 +148,7 @@ public class SymbolTable {
     /**
      * Overloaded method. By searching through the inheritance structure of the classes, search
      * and return the overridden method of the startingClassSymbol's superclass
+     *
      * @param startingClassSymbol the subclass symbol containing the definition of the "needle" method
      * @param needle subclass method symbol
      * @return method symbol of the superclass overridden method, null if the there is no overridden
@@ -162,6 +174,13 @@ public class SymbolTable {
     }
 
 
+    /**
+     * Checks whether or not subclass inherits superclass
+     *
+     * @param subClass symbol of the subclass
+     * @param superClass symbol of the superclass
+     * @return true if subclass inherits superclass, false otherwise
+     */
     public static boolean isSuperclass(ClassSymbol subClass, ClassSymbol superClass) {
         ClassSymbol classIterator = inheritances.get(subClass);
 
@@ -182,6 +201,13 @@ public class SymbolTable {
         return false;
     }
 
+    /**
+     * Private helper class that determines the lowest common superclass of two given classes
+     *
+     * @param class1 classsymbol of class1
+     * @param class2 classsymbol of class2
+     * @return the lowest common superclass of the given classes
+     */
     private static ClassSymbol getCommonSuperClass(ClassSymbol class1, ClassSymbol class2) {
         ClassSymbol classIterator = class1;
         List<String> class1SuperClasses = new ArrayList<>();
@@ -207,6 +233,12 @@ public class SymbolTable {
         return (ClassSymbol) globals.lookup(BaseTypeSymbolFactory.getOBJECT().getName());
     }
 
+    /**
+     * Determines the lowest common superclass of a list of given classes
+     *
+     * @param classes list of classes taken into account when computing the lowest superclass
+     * @return the lowest common superclass of the given classes
+     */
     public static ClassSymbol getCommonSuperclass(List<ClassSymbol> classes) {
         int noOfClasses = classes.size();
 
@@ -233,6 +265,13 @@ public class SymbolTable {
         return commonTypeSoFar;
     }
 
+    /**
+     * Searches for method in the inheritance hierarchy starting from startingClass
+     *
+     * @param startingClass starting class symbol of the inheritance hierarchy from where to search for the demanded method
+     * @param method the searched for method name
+     * @return methodsymbol of the method's definition found in the inheritance hierarchy, null if not found
+     */
     public static MethodSymbol getDispatchedMethod(ClassSymbol startingClass, String method) {
         // First, go up the parent scope hierarchy until we've reached the class scope
         Scope classIterator = startingClass;
@@ -251,6 +290,12 @@ public class SymbolTable {
         return null;
     }
 
+    /**
+     * Given a scope, finds and returns the first ClassSymbol in the scope hierarchy
+     *
+     * @param currentScope Scope of the starting point
+     * @return the first ClassSymbol encountered while going up the parent hierarchy
+     */
     public static ClassSymbol getClassOfCurrentScope(Scope currentScope) {
         Scope classIterator = currentScope;
 
