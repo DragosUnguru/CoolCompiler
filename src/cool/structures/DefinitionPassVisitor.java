@@ -26,7 +26,7 @@ public class DefinitionPassVisitor extends BasePassVisitor {
         // Get class name and create class scope
         String className = coolClass.getClassName().getToken().getText();
         ClassSymbol classSymbol = (ClassSymbol) currentScope.lookup(className);
-        ClassSymbol superClassSymbol = null;
+        ClassSymbol superClassSymbol = (ClassSymbol) currentScope.lookup("Object");
 
         // If this class inherits a superclass
         if (coolClass.getSuperClass() != null) {
@@ -103,15 +103,13 @@ public class DefinitionPassVisitor extends BasePassVisitor {
         }
 
         // If attribute is of undefined type
-        if (globals.lookup(typeName) == null) {
+        if (!typeName.equals(SELF_TYPE) && globals.lookup(typeName) == null) {
             String errorMsg = ErrorMessages.AttributeDefinitions.undefinedType(className, varName, typeName);
             error(varDef.getType().getToken(), errorMsg);
 
             return null;
         }
 
-//        varDef.getType().accept(this);
-//        varDef.getName().accept(this);
         if (varDef.getExpr() != null) {
             varDef.getExpr().accept(this);
         }
@@ -145,18 +143,8 @@ public class DefinitionPassVisitor extends BasePassVisitor {
             return null;
         }
 
-        // If method return type is undefined
-        if (globals.lookup(returnTypeName) == null) {
-            String errorMsg = ErrorMessages.MethodDefinitions.undefinedReturnType(className, methodName, returnTypeName);
-            error(methodDef.getReturnType().getToken(), errorMsg);
-
-            return null;
-        }
-
         // Visit method's body, formals
         currentScope = methodSymbol;
-//        methodDef.getName().accept(this);
-//        methodDef.getReturnType().accept(this);
 
         for (Formal formal : methodDef.getArgs()) {
             formal.accept(this);
@@ -208,19 +196,13 @@ public class DefinitionPassVisitor extends BasePassVisitor {
         }
 
         // If formal is of undefined type
-        if (globals.lookup(typeName) == null) {
+        if (!typeName.equals(SELF_TYPE) && globals.lookup(typeName) == null) {
             String errorMsg = ErrorMessages.undefinedType(currentScope, formalName, typeName);
             error(formal.getType().getToken(), errorMsg);
 
             return null;
         }
 
-//        // LetIn and Case structures don't have redefinition errors
-//        if (!(currentScope instanceof MethodSymbol) && !currentScope.add(idSymbol)) {
-//            if (!currentScope.add(idSymbol)) {
-//                return null;
-//            }
-//        }
         currentScope.add(idSymbol);
         formal.setSymbol(idSymbol);
         formal.getName().setScope(currentScope);
@@ -246,12 +228,6 @@ public class DefinitionPassVisitor extends BasePassVisitor {
         return null;
     }
 
-    /**
-     * Formals of this type (with possible initialization expression)
-     * are exclusively part of letIn structures
-     * @param initedFormal
-     * @return
-     */
     @Override
     public TypeSymbol visit(InitedFormal initedFormal) {
         initedFormal.getFormal().accept(this);
@@ -370,6 +346,18 @@ public class DefinitionPassVisitor extends BasePassVisitor {
             expression.accept(this);
         }
 
+        return null;
+    }
+
+    @Override
+    public TypeSymbol visit(New neww) {
+        neww.getType().accept(this);
+        return null;
+    }
+
+    @Override
+    public TypeSymbol visit(Type type) {
+        type.setScope(currentScope);
         return null;
     }
 }

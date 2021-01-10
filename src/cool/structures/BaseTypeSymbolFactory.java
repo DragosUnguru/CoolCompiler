@@ -1,5 +1,7 @@
 package cool.structures;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class BaseTypeSymbolFactory {
@@ -19,6 +21,12 @@ public class BaseTypeSymbolFactory {
             "IO", IO,
             "Object", OBJECT
     );
+
+    private static final List<String> METHOD_NAMES = List.of(
+            "length", "concat", "substr", "out_string", "out_int", "in_string", "in_int", "abort", "type_name", "copy");
+    private static final List<List<TypeSymbol>> METHOD_ARG_TYPE = List.of(
+            Collections.emptyList(), List.of(STRING), List.of(INT, INT), List.of(STRING), List.of(INT), Collections.emptyList(),
+            Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
 
     private BaseTypeSymbolFactory() { }
@@ -49,5 +57,17 @@ public class BaseTypeSymbolFactory {
 
     public static boolean isPrimitive(String type) {
         return MAPPED.containsKey(type);
+    }
+
+    public static boolean isBaseMethod(String methodName) {
+        return METHOD_NAMES.contains(methodName);
+    }
+
+    public static int getNoOfArgs(String methodName) {
+        return METHOD_ARG_TYPE.get(METHOD_NAMES.indexOf(methodName)).size();
+    }
+
+    public static List<TypeSymbol> getArgTypesOf(String methodName) {
+        return METHOD_ARG_TYPE.get(METHOD_NAMES.indexOf(methodName));
     }
 }

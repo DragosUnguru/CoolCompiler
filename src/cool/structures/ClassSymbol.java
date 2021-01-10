@@ -15,7 +15,7 @@ public class ClassSymbol extends IdSymbol implements Scope {
         this.parent = parent;
 
         // Also define "self" as an attribute of current's class type as return type
-        this.attributeSymbols.put(SELF, new IdSymbol(SELF, new TypeSymbol(name)));
+        this.attributeSymbols.put(SELF, new IdSymbol(SELF, new TypeSymbol(name, true)));
     }
 
     @Override

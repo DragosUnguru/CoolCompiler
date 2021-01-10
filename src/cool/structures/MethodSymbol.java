@@ -22,6 +22,20 @@ public class MethodSymbol extends IdSymbol implements Scope {
         this.methodDef = methodDef;
     }
 
+    public int getNumberOfArgs() {
+        return methodDef == null ? BaseTypeSymbolFactory.getNoOfArgs(this.name) : methodDef.getNoOfArgs();
+    }
+
+    public TypeSymbol getArgType(int idx) {
+        return methodDef == null ? BaseTypeSymbolFactory.getArgTypesOf(this.name).get(idx) :
+                methodDef.getArgs().get(idx).getSymbol().getType();
+    }
+
+    public String getArgName(int idx) {
+        return methodDef == null ? (name.equals("substr") ? "l" : "x") :
+                methodDef.getArgs().get(idx).getName().getToken().getText();
+    }
+
     @Override
     public boolean add(Symbol sym) {
         String symbolName = sym.getName();

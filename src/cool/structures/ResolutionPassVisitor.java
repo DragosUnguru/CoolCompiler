@@ -68,11 +68,17 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         String className = (currentScope).getName();
 
         // If attribute is defined in superclass
-        if (getOverriddenSymbol(currentScope, symbol) != null) {
+        if (!varName.equals(SELF) && getOverriddenSymbol(currentScope, symbol) != null) {
             String errorMsg = ErrorMessages.AttributeDefinitions.redefinesInherited(className, varName);
             error(varDef.getToken(), errorMsg);
 
             return null;
+        }
+
+        // Manage return type in case it is "SELF_TYPE"
+        if (typeName.equals(SELF_TYPE)) {
+            symbol.setType(new TypeSymbol(className, true));
+            typeName = className;
         }
 
         if (varDef.getExpr() != null) {
@@ -108,9 +114,24 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         // Get actual name and symbol of the method
         String methodName = methodId.getToken().getText();
         MethodSymbol symbol = (MethodSymbol) methodId.getSymbol();
+        String returnTypeName = symbol.getType().getName();
 
         // Current scope is always the class as the method definitions are made only within the class body
         String className = currentScope.getName();
+
+        // Manage return type in case it is "SELF_TYPE"
+        if (returnTypeName.equals(SELF_TYPE)) {
+            symbol.setType(new TypeSymbol(className, true));
+            returnTypeName = className;
+        }
+
+        // If method return type is undefined
+        if (globals.lookup(returnTypeName) == null) {
+            String errorMsg = ErrorMessages.MethodDefinitions.undefinedReturnType(className, methodName, returnTypeName);
+            error(methodDef.getReturnType().getToken(), errorMsg);
+
+            return null;
+        }
 
         // If this method overrides a method in it's superclass
         MethodSymbol overriddenSymbol = getOverriddenSymbol(currentScope, symbol);
@@ -169,6 +190,15 @@ public class ResolutionPassVisitor extends BasePassVisitor {
             return symbol.getType();
         }
 
+        // If return type of method is SELF_TYPE, the return type of the body must as well be "SELF_TYPEd"
+        if (symbol.getType().isSelfTypeEvaluated() && !lastTypeSymbol.isSelfTypeEvaluated()) {
+            String errorMsg = ErrorMessages.MethodDefinitions.illegalBodyReturnType(methodName,
+                    symbol.getType().toString(), lastTypeSymbol.toString());
+            error(lastExpression.getToken(), errorMsg);
+
+            return null;
+        }
+
         // Also check if it's a subclass of the expected type
         ClassSymbol resolvedClass = (ClassSymbol) globals.lookup(lastTypeSymbol.getName());
         ClassSymbol expectingClass = (ClassSymbol) globals.lookup(symbol.getType().getName());
@@ -176,7 +206,8 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         // If body type doesn't match the declared type
         if (!methodName.equals(MAIN_METHOD) && !lastTypeSymbol.getName().equals(symbol.getType().getName()) &&
             !isSuperclass(resolvedClass, expectingClass)) {
-            String errorMsg = ErrorMessages.MethodDefinitions.illegalBodyReturnType(methodName, symbol.getType().getName(), lastTypeSymbol.getName());
+            String errorMsg = ErrorMessages.MethodDefinitions.illegalBodyReturnType(methodName,
+                    symbol.getType().toString(), lastTypeSymbol.toString());
             error(lastExpression.getToken(), errorMsg);
 
             return null;
@@ -197,15 +228,19 @@ public class ResolutionPassVisitor extends BasePassVisitor {
             return null;
         }
 
-        // Symbol was visited and assigned a scope in the definition pass,
-        // but wasn't forward defined either
+        // Search for symbol in current scope hierarchy
         IdSymbol symbol = (IdSymbol) currentScope.lookup(id.getToken().getText());
-
         if (symbol == null) {
-            String errorMsg = ErrorMessages.Variables.undefined(id.getToken().getText());
-            error(id.getToken(), errorMsg);
+            // Symbol isn't defined in current scope hierarchy. Search in inheritance hierarchy too
+            symbol = (IdSymbol) getOverriddenSymbol(getClassOfCurrentScope(currentScope), id.getToken().getText());
 
-            return null;
+            if (symbol == null) {
+                // Symbol isn't defined in inheritance hierarchy either
+                String errorMsg = ErrorMessages.Variables.undefined(id.getToken().getText());
+                error(id.getToken(), errorMsg);
+
+                return null;
+            }
         }
 
         id.setSymbol(symbol);
@@ -279,9 +314,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
 
     @Override
     public TypeSymbol visit(Case caseStatement) {
-        List<TypeSymbol> declaredTypes = new ArrayList<>();
         List<TypeSymbol> resolvedTypes = new ArrayList<>();
-        CaseSymbol symbol = caseStatement.getSymbol();
 
         // Visit condition expression and check for returned errors
         TypeSymbol conditionType = caseStatement.getCond().accept(this);
@@ -291,7 +324,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
 
         // Visit formals and store types
         for (Formal formal : caseStatement.getFormals()) {
-            declaredTypes.add(formal.accept(this));
+            formal.accept(this);
         }
 
         // Visit formal's expressions
@@ -338,7 +371,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         // If evaluated type of the assignment doesn't match with the defined type of the variable
         if (!evaluatedType.getName().equals(assigneeType.getName()) && !isSuperclass(gotClass, expectedClass)) {
             String errorMsg = ErrorMessages.Assignments.illegalType(assigneeSymbol.getName(),
-                    assigneeType.getName(), evaluatedType.getName());
+                    assigneeType.toString(), evaluatedType.toString());
             error(assign.getExpr().getToken(), errorMsg);
 
             return null;
@@ -480,16 +513,38 @@ public class ResolutionPassVisitor extends BasePassVisitor {
 
     @Override
     public TypeSymbol visit(New neww) {
-        String typeName = neww.getType().getToken().getText();
+//        String typeName = neww.getType().getToken().getText();
+//
+//        if (!typeName.equals(SELF_TYPE) && globals.lookup(typeName) == null) {
+//            String errorMsg = ErrorMessages.Assignments.undefinedTypeWhenInstancing(typeName);
+//            error(neww.getType().getToken(), errorMsg);
+//
+//            return null;
+//        }
+//
+//        return new TypeSymbol(typeName);
+        return neww.getType().accept(this);
+    }
+
+    @Override
+    public TypeSymbol visit(Type type) {
+        String typeName = type.getToken().getText();
+        Scope currentScope = type.getScope();
+        boolean selfTypeFlag = false;
+
+        if (typeName.equals(SELF_TYPE)) {
+            typeName = getClassOfCurrentScope(currentScope).getType().getName();
+            selfTypeFlag = true;
+        }
 
         if (globals.lookup(typeName) == null) {
             String errorMsg = ErrorMessages.Assignments.undefinedTypeWhenInstancing(typeName);
-            error(neww.getType().getToken(), errorMsg);
+            error(type.getToken(), errorMsg);
 
             return null;
         }
 
-        return new TypeSymbol(neww.getType().getToken().getText());
+        return new TypeSymbol(typeName, selfTypeFlag);
     }
 
     @Override
@@ -539,10 +594,15 @@ public class ResolutionPassVisitor extends BasePassVisitor {
 
         // Visit bodies and check for errors
         if (thenBranch == null || elseBranch == null) {
-            return null;
+            return BaseTypeSymbolFactory.getOBJECT();
         }
 
-        return thenBranch;
+        // Return the superclass inherited by all resolved types of the branches
+        ClassSymbol classSymbolThen = (ClassSymbol) globals.lookup(thenBranch.getName());
+        ClassSymbol classSymbolElse = (ClassSymbol) globals.lookup(elseBranch.getName());
+        ClassSymbol joinTypeOfBranches = getCommonSuperclass(List.of(classSymbolThen, classSymbolElse));
+
+        return joinTypeOfBranches.getType();
     }
 
     // TODO: vezi ca de aici isi lua cu muie test 19
@@ -559,21 +619,58 @@ public class ResolutionPassVisitor extends BasePassVisitor {
     // TODO: todo plm
     @Override
     public TypeSymbol visit(StaticMethodCall staticMethodCall) {
-        List<TypeSymbol> resolvedArgTypes = new ArrayList<>();
-
         // Fetch scope and lookup from the said scope for the method's definition
         Id methodId = staticMethodCall.getMethodName();
-        Scope callerScope = methodId.getScope();
-        MethodSymbol methodSymbol = (MethodSymbol) callerScope.lookup(methodId.getToken().getText());
+        String methodName = methodId.getToken().getText();
 
-        return returnType;
+        // If it doesn't have a scope defined, it wasn't visited
+        // in the definition pass
+        Scope currentScope = methodId.getScope();
+
+        ClassSymbol callerType = getClassOfCurrentScope(currentScope);
+        MethodSymbol dispatchedMethodSymbol = getDispatchedMethod(callerType, methodName);
+        if (dispatchedMethodSymbol == null) {
+            String errorMsg = ErrorMessages.MethodCall.undefinedMethod(callerType.getName(), methodId.getToken().getText());
+            error(staticMethodCall.getToken(), errorMsg);
+
+            return null;
+        }
+
+        // If the number of arguments doesn't match
+        int noOfArguments = staticMethodCall.getArgs().size();
+        int dispatchedNoOfArgs = dispatchedMethodSymbol.getNumberOfArgs();
+        if (noOfArguments != dispatchedNoOfArgs) {
+            String errorMsg = ErrorMessages.MethodCall.wrongNumberOfArguments(callerType.getName(), methodName);
+            error(staticMethodCall.getMethodName().getToken(), errorMsg);
+
+            return dispatchedMethodSymbol.getType();
+        }
+
+        for (int i = 0; i < noOfArguments; ++i) {
+            Expression expression = staticMethodCall.getArgs().get(i);
+            TypeSymbol callerArgType = expression.accept(this);
+            TypeSymbol methodDefArgType = dispatchedMethodSymbol.getArgType(i);
+//            TypeSymbol methodDefArgType = dispatchedMethodSymbol.methodDef.getArgs().get(i).getSymbol().getType();
+
+            // Check for superclass types as well
+            ClassSymbol callClass = (ClassSymbol) globals.lookup(callerArgType.getName());
+            ClassSymbol defClass = (ClassSymbol) globals.lookup(methodDefArgType.getName());
+
+            // If argument type doesn't match
+            if (!callerArgType.getName().equals(methodDefArgType.getName()) && !isSuperclass(callClass, defClass)) {
+                String errorMsg = ErrorMessages.MethodCall.wrongArgumentType(callerType.getName(), methodName,
+                        dispatchedMethodSymbol.getArgName(i), methodDefArgType.getName(), callerArgType.getName());
+                error(staticMethodCall.getArgs().get(i).getToken(), errorMsg);
+            }
+        }
+        return dispatchedMethodSymbol.getType();
     }
 
     @Override
     public TypeSymbol visit(MethodCall methodCall) {
         String methodName = methodCall.getMethodName().getToken().getText();
         TypeSymbol callerSymbolType = methodCall.getCaller().accept(this);
-        ClassSymbol callerType;
+        ClassSymbol callerType = (ClassSymbol) globals.lookup(callerSymbolType.getName());
 
         // Resolve static dispatch
         if (methodCall.getImposedType() != null) {
@@ -604,9 +701,12 @@ public class ResolutionPassVisitor extends BasePassVisitor {
 
                 return null;
             }
-        } else {
-            // No static dispatch, get class symbol of method by the caller
-            callerType = (ClassSymbol) globals.lookup(callerSymbolType.getName());
+        }
+
+        // The only unresolved SELF_TYPE is if the caller is "self"
+        // Manage caller symbol to current scope's class type
+        if (callerSymbolType.getName().equals(SELF_TYPE)) {
+            callerType = getClassOfCurrentScope(methodCall.getMethodName().getScope());
         }
 
         // Search method in resolved caller's class
@@ -620,7 +720,8 @@ public class ResolutionPassVisitor extends BasePassVisitor {
 
         // If the number of arguments doesn't match
         int noOfArguments = methodCall.getNoOfArgs();
-        if (noOfArguments != dispatchedMethodSymbol.methodDef.getNoOfArgs()) {
+        int dispatchedNoOfArgs = dispatchedMethodSymbol.getNumberOfArgs();
+        if (noOfArguments != dispatchedNoOfArgs) {
             String errorMsg = ErrorMessages.MethodCall.wrongNumberOfArguments(callerType.getName(), methodName);
             error(methodCall.getMethodName().getToken(), errorMsg);
 
@@ -630,7 +731,9 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         for (int i = 0; i < noOfArguments; ++i) {
             Expression expression = methodCall.getArgs().get(i);
             TypeSymbol callerArgType = expression.accept(this);
-            TypeSymbol methodDefArgType = dispatchedMethodSymbol.methodDef.getArgs().get(i).getSymbol().getType();
+            TypeSymbol methodDefArgType = dispatchedMethodSymbol.getArgType(i);
+
+//            TypeSymbol methodDefArgType = dispatchedMethodSymbol.methodDef.getArgs().get(i).getSymbol().getType();
 
             // Check for superclass types as well
             ClassSymbol callClass = (ClassSymbol) globals.lookup(callerArgType.getName());
@@ -639,10 +742,14 @@ public class ResolutionPassVisitor extends BasePassVisitor {
             // If argument type doesn't match
             if (!callerArgType.getName().equals(methodDefArgType.getName()) && !isSuperclass(callClass, defClass)) {
                 String errorMsg = ErrorMessages.MethodCall.wrongArgumentType(callerType.getName(), methodName,
-                        dispatchedMethodSymbol.methodDef.getArgs().get(i).getName().getToken().getText(),
-                        methodDefArgType.getName(), callerArgType.getName());
+                        dispatchedMethodSymbol.getArgName(i), methodDefArgType.getName(), callerArgType.getName());
                 error(methodCall.getArgs().get(i).getToken(), errorMsg);
             }
+        }
+        
+        if (dispatchedMethodSymbol.getType().isSelfTypeEvaluated()) {
+            // SELF_TYPE of the dispatched method now resolves to the caller type
+            return methodCall.getCaller().accept(this);
         }
 
         return dispatchedMethodSymbol.getType();

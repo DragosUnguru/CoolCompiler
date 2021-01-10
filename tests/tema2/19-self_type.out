@@ -1,24 +1,11 @@
-"19-self_type.cl", line 2:9, Semantic error: Class A has attribute x with undefined type SELF_TYPE
-"19-self_type.cl", line 5:24, Semantic error: Class A has method h with undefined return type SELF_TYPE
-"19-self_type.cl", line 18:12, Semantic error: Class A has method f1 with undefined return type SELF_TYPE
-"19-self_type.cl", line 56:12, Semantic error: Class D has method f1 with undefined return type SELF_TYPE
-"19-self_type.cl", line 2:22, Semantic error: Undefined identifier self
-"19-self_type.cl", line 7:35, Semantic error: Undefined identifier z
-Exception in thread "main" java.lang.NullPointerException: Cannot invoke "cool.structures.LetInSymbol.setType(cool.structures.TypeSymbol)" because "symbol" is null
-	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:274)
-	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:13)
-	at cool.compiler.LetIn.accept(LetIn.java:44)
-	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:553)
-	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:13)
-	at cool.compiler.InstructionBlock.accept(InstructionBlock.java:24)
-	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:162)
-	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:13)
-	at cool.compiler.MethodDef.accept(MethodDef.java:58)
-	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:49)
-	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:13)
-	at cool.compiler.CoolClass.accept(CoolClass.java:44)
-	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:20)
-	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:13)
-	at cool.compiler.Program.accept(Program.java:24)
-	at cool.compiler.Compiler.main(Compiler.java:144)
-	at cool.tester.Tester2.main(Tester2.java:34)
+"19-self_type.cl", line 5:11, Semantic error: Method h of class A has formal parameter y with illegal type SELF_TYPE
+"19-self_type.cl", line 7:35, Semantic error: Operand of + has type SELF_TYPE instead of Int
+"19-self_type.cl", line 10:18, Semantic error: Type Object of assigned expression is incompatible with declared type SELF_TYPE of identifier x
+"19-self_type.cl", line 12:18, Semantic error: Type SELF_TYPE of assigned expression is incompatible with declared type Int of identifier u
+"19-self_type.cl", line 6:9, Semantic error: Type Int of the body of method h is incompatible with declared return type SELF_TYPE
+"19-self_type.cl", line 34:19, Semantic error: Undefined method g in class A
+"19-self_type.cl", line 35:24, Semantic error: Undefined method g in class A
+"19-self_type.cl", line 43:24, Semantic error: Undefined method g in class A
+"19-self_type.cl", line 46:21, Semantic error: Undefined method g in class A
+"19-self_type.cl", line 56:24, Semantic error: Type D of the body of method f1 is incompatible with declared return type SELF_TYPE
+Compilation halted

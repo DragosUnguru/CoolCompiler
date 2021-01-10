@@ -1,14 +1,15 @@
 package cool.structures;
 
 import java.util.*;
+
 import org.antlr.v4.runtime.*;
 
 import static cool.compiler.Compiler.FILENAME;
+import static cool.structures.BasePassVisitor.SELF_TYPE;
 
 public class SymbolTable {
 
     private static final Map<String, List<String>> BASE_CLASSES = Map.of(
-            "Object",   new ArrayList<>(), // TODO add object's methods
             "Int",      new ArrayList<>(),
             "Bool",     List.of("true", "false"),
             "String",   List.of("length", "concat", "substr"),
@@ -25,22 +26,41 @@ public class SymbolTable {
      * utility structures
      */
     public static void defineBasicClasses() {
-        List<ClassSymbol> baseClassesSymbols = new ArrayList<>();
         globals = new DefaultScope(null);
         inheritances = new LinkedHashMap<>();
         semanticErrors = false;
-        
+        Map<String, String> objectMethods = Map.of(
+                "abort", "Object",
+                "type_name", "String",
+                "copy", SELF_TYPE
+        );
+
+        // Create Object class separately so we can manage all the different return types of its methods
+        // and to also add the rest of the base classes as children
+        ClassSymbol objectClass = new ClassSymbol("Object", null);
+        objectClass.setType(BaseTypeSymbolFactory.getOBJECT());
+        for (Map.Entry<String, String> methodEntry : objectMethods.entrySet()) {
+            String methodName = methodEntry.getKey();
+            String methodReturnType = methodEntry.getValue();
+
+            MethodSymbol objectMethod = new MethodSymbol(methodName, objectClass);
+            objectMethod.setType(new TypeSymbol(methodReturnType));
+
+            objectClass.add(objectMethod);
+        }
+        globals.add(objectClass);
+
         // Populate global scope with default classes and their methods
         for (Map.Entry<String, List<String>> classEntry : BASE_CLASSES.entrySet()) {
             String className = classEntry.getKey();
-            List<String> classMethods = classEntry.getValue();
+            List<String> formals = classEntry.getValue();
 
             // Create class symbol with global scope as parent for the current base class
             ClassSymbol classSymbol = new ClassSymbol(className, null);
             classSymbol.setType(BaseTypeSymbolFactory.get(className));
 
             // Add the base methods of the said class to its scope
-            for (String formalName : classMethods) {
+            for (String formalName : formals) {
                 IdSymbol symbol;
                 TypeSymbol returnType = BaseTypeSymbolFactory.get(className);
 
@@ -52,26 +72,19 @@ public class SymbolTable {
                 }
 
                 // All return SELF_TYPE, excepting String's class 'length' that returns Int
-                if (formalName.equals("length")) {
+                if (formalName.equals("length") || formalName.equals("in_int")) {
                     returnType = BaseTypeSymbolFactory.getINT();
+                }
+                else if (formalName.equals("in_string")) {
+                    returnType = BaseTypeSymbolFactory.getSTRING();
                 }
 
                 symbol.setType(returnType);
                 classSymbol.add(symbol);
             }
 
-            // Add base class to global scope
+            // Add base class to global scope and inherit Object class
             globals.add(classSymbol);
-
-            // So we can later link inheritance relationships for all base classes to Object class
-            if (!className.equals("Object")) {
-                baseClassesSymbols.add(classSymbol);
-            }
-        }
-
-        // All base classes inherit Object class
-        ClassSymbol objectClass = (ClassSymbol) globals.lookup("Object");
-        for (ClassSymbol classSymbol : baseClassesSymbols) {
             inheritances.put(classSymbol, objectClass);
         }
     }
@@ -95,6 +108,24 @@ public class SymbolTable {
 
             if (result instanceof IdSymbol) {
                 return (IdSymbol) result;
+            }
+
+            classIterator = inheritances.get(classIterator);
+        }
+
+        return null;
+    }
+
+    public static Symbol getOverriddenSymbol(ClassSymbol startingClassSymbol, String needle) {
+        ClassSymbol classIterator = inheritances.get(startingClassSymbol);
+
+        // Search in all inherited classes until we've reached the top
+        // or encountered an inheritance cycle
+        while (classIterator != null) {
+            Symbol result = classIterator.lookup(needle);
+
+            if (result != null) {
+                return result;
             }
 
             classIterator = inheritances.get(classIterator);
@@ -133,6 +164,10 @@ public class SymbolTable {
 
     public static boolean isSuperclass(ClassSymbol subClass, ClassSymbol superClass) {
         ClassSymbol classIterator = inheritances.get(subClass);
+
+        if (superClass == null) {
+            return false;
+        }
 
         // Search in all inherited classes until we've reached the top
         // or encountered an inheritance cycle
@@ -199,8 +234,10 @@ public class SymbolTable {
     }
 
     public static MethodSymbol getDispatchedMethod(ClassSymbol startingClass, String method) {
-        ClassSymbol classIterator = startingClass;
+        // First, go up the parent scope hierarchy until we've reached the class scope
+        Scope classIterator = startingClass;
 
+        // Got the class scope, search in inheritance hierarchy
         while (classIterator != null) {
             Symbol dispatchedMethod = classIterator.searchInScope(method);
 
@@ -212,6 +249,15 @@ public class SymbolTable {
         }
 
         return null;
+    }
+
+    public static ClassSymbol getClassOfCurrentScope(Scope currentScope) {
+        Scope classIterator = currentScope;
+
+        while (!(classIterator instanceof ClassSymbol)) {
+            classIterator = classIterator.getParent();
+        }
+        return (ClassSymbol) classIterator;
     }
     
     /**
