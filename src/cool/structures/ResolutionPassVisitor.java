@@ -184,7 +184,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         }
 
         // Doesn't matter if return type is Object
-        if (symbol.getType().getName().equals(BaseTypeSymbolFactory.getOBJECT().getName()) ||
+        if (symbol.getType().equals(BaseTypeSymbolFactory.getOBJECT()) ||
                 lastTypeSymbol == null) {
             return symbol.getType();
         }
@@ -203,7 +203,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         ClassSymbol expectingClass = (ClassSymbol) globals.lookup(symbol.getType().getName());
 
         // If body type doesn't match the declared type
-        if (!methodName.equals(MAIN_METHOD) && !lastTypeSymbol.getName().equals(symbol.getType().getName()) &&
+        if (!methodName.equals(MAIN_METHOD) && !lastTypeSymbol.equals(symbol.getType()) &&
             !isSuperclass(resolvedClass, expectingClass)) {
             String errorMsg = ErrorMessages.MethodDefinitions.illegalBodyReturnType(methodName,
                     symbol.getType().toString(), lastTypeSymbol.toString());
@@ -279,7 +279,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
             ClassSymbol gotClass = (ClassSymbol) globals.lookup(resolvedType.getName());
             ClassSymbol expectedClass = (ClassSymbol) globals.lookup(declaredTypeSymbol.getName());
 
-            if (!resolvedTypeName.equals(declaredTypeSymbol.getName()) && !isSuperclass(gotClass, expectedClass)) {
+            if (!resolvedType.equals(declaredTypeSymbol) && !isSuperclass(gotClass, expectedClass)) {
                 String errorMsg = ErrorMessages.LetIn.illegalInitExprType(formalName, declaredTypeName, resolvedType.getName());
                 error(initExpr.getToken(), errorMsg);
 
@@ -368,7 +368,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         ClassSymbol expectedClass = (ClassSymbol) globals.lookup(assigneeType.getName());
 
         // If evaluated type of the assignment doesn't match with the defined type of the variable
-        if (!evaluatedType.getName().equals(assigneeType.getName()) && !isSuperclass(gotClass, expectedClass)) {
+        if (!evaluatedType.equals(assigneeType) && !isSuperclass(gotClass, expectedClass)) {
             String errorMsg = ErrorMessages.Assignments.illegalType(assigneeSymbol.getName(),
                     assigneeType.toString(), evaluatedType.toString());
             error(assign.getExpr().getToken(), errorMsg);
@@ -385,17 +385,17 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         TypeSymbol rightType = arithmetic.getRight().accept(this);
 
         String operation = arithmetic.getOperation().getToken().getText();
-        String expectingType = BaseTypeSymbolFactory.getINT().getName();
+        TypeSymbol expectingType = BaseTypeSymbolFactory.getINT();
 
         // If any of the operands isn't of type Int
-        if (leftType != null && !leftType.getName().equals(expectingType)) {
+        if (leftType != null && !leftType.equals(expectingType)) {
             String errorMsg = ErrorMessages.Operators.operandNotInt(operation, leftType.getName());
             error(arithmetic.getLeft().getToken(), errorMsg);
 
             return null;
         }
 
-        if (rightType != null && !rightType.getName().equals(expectingType)) {
+        if (rightType != null && !rightType.equals(expectingType)) {
             String errorMsg = ErrorMessages.Operators.operandNotInt(operation, rightType.getName());
             error(arithmetic.getRight().getToken(), errorMsg);
 
@@ -416,13 +416,13 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         // Different error message and logic for less than symbols
         if (LESS_SYMBOLS.contains(currentOperation)) {
             // If one of the operands isn't of type Int
-            if (leftType != null && !leftType.getName().equals(intType.getName())) {
+            if (leftType != null && !leftType.equals(intType)) {
                 String errorMsg = ErrorMessages.Operators.operandNotInt("<", leftType.getName());
                 error(relational.getLeft().getToken(), errorMsg);
 
                 return null;
             }
-            if (rightType != null && !rightType.getName().equals(intType.getName())) {
+            if (rightType != null && !rightType.equals(intType)) {
                 String errorMsg = ErrorMessages.Operators.operandNotInt("<", rightType.getName());
                 error(relational.getRight().getToken(), errorMsg);
 
@@ -435,7 +435,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
             if (leftType != null && rightType != null &&
                 BaseTypeSymbolFactory.isPrimitive(leftType.getName()) &&
                 BaseTypeSymbolFactory.isPrimitive(rightType.getName()) &&
-                !leftType.getName().equals(rightType.getName())) {
+                !leftType.equals(rightType)) {
 
                 String errorMsg = ErrorMessages.Operators.illegalCompare(leftType.getName(), rightType.getName());
                 error(relational.getOperation().getToken(), errorMsg);
@@ -456,7 +456,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         }
 
         // Negation accepts ints exclusively, reject any other type
-        if (!resolvedType.getName().equals(BaseTypeSymbolFactory.getINT().getName())) {
+        if (!resolvedType.equals(BaseTypeSymbolFactory.getINT())) {
             String errorMsg = ErrorMessages.Operators.operandNotInt("~", resolvedType.getName());
             error(negation.getExpr().getToken(), errorMsg);
 
@@ -476,7 +476,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
             return null;
         }
 
-        if (!resolvedType.getName().equals(acceptedType.getName())) {
+        if (!resolvedType.equals(acceptedType)) {
             String errorMsg = ErrorMessages.Operators.operandNotBool("not", resolvedType.getName());
             error(not.getExpr().getToken(), errorMsg);
 
@@ -549,7 +549,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         }
 
         // Check condition type
-        if (!condSymbol.getName().equals(BaseTypeSymbolFactory.getBOOL().getName())) {
+        if (!condSymbol.equals(BaseTypeSymbolFactory.getBOOL())) {
             String errorMsg = ErrorMessages.Conditions.illegalWhileCond(condSymbol.getName(), "While");
             error(whileLoop.getCond().getToken(), errorMsg);
         }
@@ -570,7 +570,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
         }
 
         // Check condition type
-        if (!condSymbol.getName().equals(BaseTypeSymbolFactory.getBOOL().getName())) {
+        if (!condSymbol.equals(BaseTypeSymbolFactory.getBOOL())) {
             String errorMsg = ErrorMessages.Conditions.illegalWhileCond(condSymbol.getName(), "If");
             error(ifStatement.getCond().getToken(), errorMsg);
 
@@ -642,7 +642,7 @@ public class ResolutionPassVisitor extends BasePassVisitor {
             ClassSymbol defClass = (ClassSymbol) globals.lookup(methodDefArgType.getName());
 
             // If argument type doesn't match
-            if (!callerArgType.getName().equals(methodDefArgType.getName()) && !isSuperclass(callClass, defClass)) {
+            if (!callerArgType.equals(methodDefArgType) && !isSuperclass(callClass, defClass)) {
                 String errorMsg = ErrorMessages.MethodCall.wrongArgumentType(callerType.getName(), methodName,
                         dispatchedMethodSymbol.getArgName(i), methodDefArgType.getName(), callerArgType.getName());
                 error(staticMethodCall.getArgs().get(i).getToken(), errorMsg);
@@ -718,14 +718,12 @@ public class ResolutionPassVisitor extends BasePassVisitor {
             TypeSymbol callerArgType = expression.accept(this);
             TypeSymbol methodDefArgType = dispatchedMethodSymbol.getArgType(i);
 
-//            TypeSymbol methodDefArgType = dispatchedMethodSymbol.methodDef.getArgs().get(i).getSymbol().getType();
-
             // Check for superclass types as well
             ClassSymbol callClass = (ClassSymbol) globals.lookup(callerArgType.getName());
             ClassSymbol defClass = (ClassSymbol) globals.lookup(methodDefArgType.getName());
 
             // If argument type doesn't match
-            if (!callerArgType.getName().equals(methodDefArgType.getName()) && !isSuperclass(callClass, defClass)) {
+            if (!callerArgType.equals(methodDefArgType) && !isSuperclass(callClass, defClass)) {
                 String errorMsg = ErrorMessages.MethodCall.wrongArgumentType(callerType.getName(), methodName,
                         dispatchedMethodSymbol.getArgName(i), methodDefArgType.getName(), callerArgType.getName());
                 error(methodCall.getArgs().get(i).getToken(), errorMsg);

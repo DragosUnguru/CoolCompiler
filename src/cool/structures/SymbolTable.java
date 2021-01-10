@@ -191,7 +191,7 @@ public class SymbolTable {
         // Search in all inherited classes until we've reached the top
         // or encountered an inheritance cycle
         while (classIterator != null) {
-            if (classIterator.getName().equals(superClass.getName())) {
+            if (classIterator.equals(superClass)) {
                 return true;
             }
 
@@ -210,18 +210,18 @@ public class SymbolTable {
      */
     private static ClassSymbol getCommonSuperClass(ClassSymbol class1, ClassSymbol class2) {
         ClassSymbol classIterator = class1;
-        List<String> class1SuperClasses = new ArrayList<>();
+        List<ClassSymbol> class1SuperClasses = new ArrayList<>();
 
         // Compute the whole inheritance structure of one class
         while (classIterator != null) {
-            class1SuperClasses.add(classIterator.getName());
+            class1SuperClasses.add(classIterator);
             classIterator = inheritances.get(classIterator);
         }
 
         // Start from the class itself as it can already be a superclass of class1
         classIterator = class2;
         while (classIterator != null) {
-            if (class1SuperClasses.contains(classIterator.getName())) {
+            if (class1SuperClasses.contains(classIterator)) {
                 // Found the first common superclass
                 return classIterator;
             }
