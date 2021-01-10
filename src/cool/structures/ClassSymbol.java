@@ -48,7 +48,7 @@ public class ClassSymbol extends IdSymbol implements Scope {
 
     @Override
     public Symbol searchInScope(String str) {
-        return attributeSymbols.containsKey(str) ? attributeSymbols.get(str) : methodSymbols.get(str);
+        return methodSymbols.containsKey(str) ? methodSymbols.get(str) : attributeSymbols.get(str);
     }
 
     @Override

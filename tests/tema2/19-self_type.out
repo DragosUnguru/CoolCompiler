@@ -5,13 +5,13 @@
 "19-self_type.cl", line 2:22, Semantic error: Undefined identifier self
 "19-self_type.cl", line 7:35, Semantic error: Undefined identifier z
 Exception in thread "main" java.lang.NullPointerException: Cannot invoke "cool.structures.LetInSymbol.setType(cool.structures.TypeSymbol)" because "symbol" is null
-	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:277)
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:274)
 	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:13)
 	at cool.compiler.LetIn.accept(LetIn.java:44)
-	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:556)
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:553)
 	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:13)
 	at cool.compiler.InstructionBlock.accept(InstructionBlock.java:24)
-	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:163)
+	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:162)
 	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:13)
 	at cool.compiler.MethodDef.accept(MethodDef.java:58)
 	at cool.structures.ResolutionPassVisitor.visit(ResolutionPassVisitor.java:49)

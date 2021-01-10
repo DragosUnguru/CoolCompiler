@@ -197,6 +197,22 @@ public class SymbolTable {
 
         return commonTypeSoFar;
     }
+
+    public static MethodSymbol getDispatchedMethod(ClassSymbol startingClass, String method) {
+        ClassSymbol classIterator = startingClass;
+
+        while (classIterator != null) {
+            Symbol dispatchedMethod = classIterator.searchInScope(method);
+
+            if (dispatchedMethod instanceof MethodSymbol) {
+                return (MethodSymbol) dispatchedMethod;
+            }
+
+            classIterator = inheritances.get(classIterator);
+        }
+
+        return null;
+    }
     
     /**
      * Displays a semantic error message.

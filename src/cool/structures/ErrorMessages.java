@@ -232,4 +232,33 @@ public final class ErrorMessages {
 
         private Assignments() { }
     }
+
+    public static final class MethodCall {
+        public static String wrongNumberOfArguments(String className, String methodName) {
+            return "Method " + methodName + " of class " + className + " is applied to wrong number of arguments";
+        }
+
+        public static String wrongArgumentType(String className, String methodName, String argName, String declaredType, String actualType) {
+            return "In call to method " + methodName + " of class " + className + ", actual type " + actualType + " of formal parameter " +
+                    argName + " is incompatible with declared type " + declaredType;
+        }
+
+        public static String selfTypeStaticDispach() {
+            return "Type of static dispatch cannot be SELF_TYPE";
+        }
+
+        public static String undefinedTypeOfStaticDispatch(String typeName) {
+            return "Type " + typeName + " of static dispatch is undefined";
+        }
+
+        public static String notASuperclassStaticDispatch(String superClass, String subClass) {
+            return "Type " + superClass + " of static dispatch is not a superclass of type " + subClass;
+        }
+
+        public static String undefinedMethod(String className, String methodName) {
+            return "Undefined method " + methodName + " in class " + className;
+        }
+
+        private MethodCall() { }
+    }
 }

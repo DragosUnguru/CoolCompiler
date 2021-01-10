@@ -64,11 +64,6 @@ public class DefinitionPassVisitor extends BasePassVisitor {
             id.setScope(currentScope);
         }
 
-//        if (currentScope.lookup(id.getToken().getText()) == null) {
-//            String errorMsg = ErrorMessages.Variables.undefined(id.getToken().getText());
-//            error(id.getToken(), errorMsg);
-//        }
-
         return null;
     }
 
@@ -351,6 +346,30 @@ public class DefinitionPassVisitor extends BasePassVisitor {
         for (Expression expression : instructionBlock.getBody()) {
             expression.accept(this);
         }
+        return null;
+    }
+
+
+    @Override
+    public TypeSymbol visit(StaticMethodCall staticMethodCall) {
+        // Visit Id to set the scope of the token
+        staticMethodCall.getMethodName().accept(this);
+        for (Expression expression : staticMethodCall.getArgs()) {
+            expression.accept(this);
+        }
+        return null;
+    }
+
+    @Override
+    public TypeSymbol visit(MethodCall methodCall) {
+        // Visit Id and caller to set the scope of the tokens
+        methodCall.getMethodName().accept(this);
+        methodCall.getCaller().accept(this);
+
+        for (Expression expression : methodCall.getArgs()) {
+            expression.accept(this);
+        }
+
         return null;
     }
 }

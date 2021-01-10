@@ -163,8 +163,10 @@ public class ResolutionPassVisitor extends BasePassVisitor {
             lastExpression = expression;
         }
 
-        if (symbol.getType().getName().equals(BaseTypeSymbolFactory.getOBJECT().getName())) {
-            return null;
+        // Doesn't matter if return type is Object
+        if (symbol.getType().getName().equals(BaseTypeSymbolFactory.getOBJECT().getName()) ||
+                lastTypeSymbol == null) {
+            return symbol.getType();
         }
 
         // Also check if it's a subclass of the expected type
@@ -553,4 +555,97 @@ public class ResolutionPassVisitor extends BasePassVisitor {
 
         return lastSymbol;
     }
+
+    // TODO: todo plm
+    @Override
+    public TypeSymbol visit(StaticMethodCall staticMethodCall) {
+        List<TypeSymbol> resolvedArgTypes = new ArrayList<>();
+
+        // Fetch scope and lookup from the said scope for the method's definition
+        Id methodId = staticMethodCall.getMethodName();
+        Scope callerScope = methodId.getScope();
+        MethodSymbol methodSymbol = (MethodSymbol) callerScope.lookup(methodId.getToken().getText());
+
+        return returnType;
+    }
+
+    @Override
+    public TypeSymbol visit(MethodCall methodCall) {
+        String methodName = methodCall.getMethodName().getToken().getText();
+        TypeSymbol callerSymbolType = methodCall.getCaller().accept(this);
+        ClassSymbol callerType;
+
+        // Resolve static dispatch
+        if (methodCall.getImposedType() != null) {
+            String staticDispatch = methodCall.getImposedType().getToken().getText();
+
+            // If static dispatch is of type SELF_TYPE
+            if (staticDispatch.equals(SELF_TYPE)) {
+                String errorMsg = ErrorMessages.MethodCall.selfTypeStaticDispach();
+                error(methodCall.getImposedType().getToken(), errorMsg);
+
+                return null;
+            }
+
+            // If static dispatch type is undefined
+            callerType = (ClassSymbol) globals.lookup(staticDispatch);
+            if (callerType == null) {
+                String errorMsg = ErrorMessages.MethodCall.undefinedTypeOfStaticDispatch(staticDispatch);
+                error(methodCall.getImposedType().getToken(), errorMsg);
+
+                return null;
+            }
+
+            // If static dispatch isn't a subclass of caller
+            ClassSymbol idClass = (ClassSymbol) globals.lookup(callerSymbolType.getName());
+            if (!isSuperclass(idClass, callerType)) {
+                String errorMsg = ErrorMessages.MethodCall.notASuperclassStaticDispatch(callerType.getName(), idClass.getName());
+                error(methodCall.getImposedType().getToken(), errorMsg);
+
+                return null;
+            }
+        } else {
+            // No static dispatch, get class symbol of method by the caller
+            callerType = (ClassSymbol) globals.lookup(callerSymbolType.getName());
+        }
+
+        // Search method in resolved caller's class
+        MethodSymbol dispatchedMethodSymbol = getDispatchedMethod(callerType, methodName);
+        if (dispatchedMethodSymbol == null) {
+            String errorMsg = ErrorMessages.MethodCall.undefinedMethod(callerType.getName(), methodName);
+            error(methodCall.getMethodName().getToken(), errorMsg);
+
+            return null;
+        }
+
+        // If the number of arguments doesn't match
+        int noOfArguments = methodCall.getNoOfArgs();
+        if (noOfArguments != dispatchedMethodSymbol.methodDef.getNoOfArgs()) {
+            String errorMsg = ErrorMessages.MethodCall.wrongNumberOfArguments(callerType.getName(), methodName);
+            error(methodCall.getMethodName().getToken(), errorMsg);
+
+            return dispatchedMethodSymbol.getType();
+        }
+
+        for (int i = 0; i < noOfArguments; ++i) {
+            Expression expression = methodCall.getArgs().get(i);
+            TypeSymbol callerArgType = expression.accept(this);
+            TypeSymbol methodDefArgType = dispatchedMethodSymbol.methodDef.getArgs().get(i).getSymbol().getType();
+
+            // Check for superclass types as well
+            ClassSymbol callClass = (ClassSymbol) globals.lookup(callerArgType.getName());
+            ClassSymbol defClass = (ClassSymbol) globals.lookup(methodDefArgType.getName());
+
+            // If argument type doesn't match
+            if (!callerArgType.getName().equals(methodDefArgType.getName()) && !isSuperclass(callClass, defClass)) {
+                String errorMsg = ErrorMessages.MethodCall.wrongArgumentType(callerType.getName(), methodName,
+                        dispatchedMethodSymbol.methodDef.getArgs().get(i).getName().getToken().getText(),
+                        methodDefArgType.getName(), callerArgType.getName());
+                error(methodCall.getArgs().get(i).getToken(), errorMsg);
+            }
+        }
+
+        return dispatchedMethodSymbol.getType();
+    }
+
 }
